@@ -1,0 +1,6 @@
+Topic 
+Week 3: Grammar of Graphics and Creating Reports
+
+Learning Objectives: 
+- Translate an image of description of a graphic to a specification of the graphic using the layered grammar of graphics in ggplot2.
+- Deconstruct a graphic into the data displayed and how it is mapped to visual properties.
