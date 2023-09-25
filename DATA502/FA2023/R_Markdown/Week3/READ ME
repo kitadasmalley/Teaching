@@ -5,6 +5,11 @@ Learning Objectives:
 - Translate an image of description of a graphic to a specification of the graphic using the layered grammar of graphics in ggplot2.
 - Deconstruct a graphic into the data displayed and how it is mapped to visual properties.
 
+
+Vitual "Worksheets" In this file include: 
+1) Introduction to ggplot2: Points
+2) Data Viz: Recreating Shot Plot (credit to Charlotte Wickham for original work)
+
 Solutions can be found at: 
-https://rpubs.com/hsmalley/dv_points
-https://rpubs.com/hsmalley/laShot
+1) https://rpubs.com/hsmalley/dv_points
+2) https://rpubs.com/hsmalley/laShot
