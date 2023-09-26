@@ -1,0 +1,66 @@
+---
+title: "Guinea Pig Example"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+data("ToothGrowth")
+?ToothGrowth
+str(ToothGrowth)
+```
+
+#### 1) What do the rows of this dataset represent?
+
+```{}
+YOUR ANSWER HERE
+```
+
+
+#### 2) What do the columns of this dataset represent? Indicate whether each variable in the study is numerical or categorical. If numerical, identify as continuous or discrete. If categorical, indicate if the variable is ordinal.
+
+```{}
+YOUR ANSWER HERE
+```
+
+
+#### 3) What are the response and explanatory variables in this study?
+
+```{}
+YOUR ANSWER HERE
+```
+
+
+
+#### 4) Describe how you might assign guinea pigs to treatments.
+
+```{}
+YOUR ANSWER HERE
+```
+
+
+#### 5) Create a boxplot. Use the following code.
+
+```{}
+## Here is some pseudo code to help
+## i.e. this will not run
+boxplot(RESPONSE~EXPLANATORY, data=DATA_SET, xlab="EXPLANATORY",
+ylab="RESPONSE")
+```
+
+```{r}
+### PUT YOUR CODE HERE TO RUN
+```
+
+
+#### 6) Based on all the parts above, can you help the researcher find evidence to support or refute their hypothesis? Explain.
+
+```{}
+YOUR ANSWER HERE
+```
+
+

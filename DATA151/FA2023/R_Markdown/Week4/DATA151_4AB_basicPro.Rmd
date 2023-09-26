@@ -1,0 +1,270 @@
+---
+title: 'DATA151: Basics of Programming'
+author: "STUDENT NAME HERE"
+output: 
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+---
+
+
+### Learning Objective:
+In this session students will learn how to create an R markdown document that basics of programming through a case study of creating a randomized experiment. 
+
+* How to create an R Markdown document: `.Rmd`
+  * Creating headers at different levels to organize and navigate the document
+  * Creating and working with code chunks 
+
+* Basics of programming: 
+  * Creating a sequence of consecutive integers
+  * Creating and working with matrices: `matrix()`
+    * Matrix indexing 
+  * Creating random values from R: `sample()`
+  * Working with `for` loops 
+  * Using the `%in%` operator to define group membership
+  * Using conditional statements: `if()`
+  * How to concatenate values together to form a vector: `c()`
+
+### The Motivation
+
+Consider the set up: 
+
+* In a greenhouse experiment we want to study a single factors (fertilizer) with 4 levels
+* We have enough space for 24 experimental units (a potted plant) 
+* To maintain balance in the experiment, we will have 6 replications of each treatment 
+
+### 1. Creating ID's
+
+We want to give each experimental unit an ID.  Since ultimately we arae going to randomly draw from this list of IDs we can just assign number IDs from 1 to 24.  This can be done by using the colon (`:`).  The syntax for the colon function is `starting integer : ending integer`.
+
+```{r}
+# STEP 1: Giving Id's to Experimental Units
+# recall in our example from class there were 24 plants (experimental units)
+# the colon is a way to create a vector of consecutive integers
+
+ids<-1:24
+# note that we are storing the output as a vector
+ids
+```
+
+
+#### Learning by doing: 
+
+* Q1: What happens when you go from a bigger number to a smaller number?
+
+```{r}
+# INSERT CODE HERE #
+```
+
+
+* Q2: What happens when you go have a postitive and negative number?
+
+```{r}
+# INSERT CODE HERE #
+```
+
+### 2. Organizing Your Lab Experiment
+
+In the example we saw, the lab bench had 4 rows and 6 columns.  We can use the `matrix` function to organize all our experimental units.  Matrices have two dimensions, rows and columns (in that order).  A matrix is a very useful way to store numbers there are also special mathematical operations that can be performed on matrices.
+
+Start by reading the documentation about matrices:
+```{r}
+# let's read the documentation about matrix function to learn about it arguments
+?matrix
+
+# the inputs of this function are the data, nrow, and ncol 
+```
+
+Now let's organize our experimental units: 
+
+```{r}
+## STEP 2: Organizing the experimental units into rows and columns 
+# in the example we saw, the lab bench had 4 rows and 6 columns
+labBench<-matrix(ids, nrow=4, ncol=6)
+labBench
+
+# this is a matrix!  
+```
+
+#### Learning by doing: 
+
+* What would happen if the number of columns was omitted? (ie don't include `ncol`)
+
+```{r}
+# INSERT CODE HERE #
+```
+
+* What if product of the dimensions `nrow` $\times$ `ncol` is not equal to the length of the data?
+
+```{r}
+# INSERT CODE HERE #
+```
+
+### 3. Randomly Assigning Treatments
+
+We want to randomly assign treatments to our experimental units to avoid confounding.  We can use R to help us with this task.  
+
+The simplest form of an experimental design is a *Completely Randomized Design*.  In this design we choose ID's and randomly assign to treatments.  In order to choose which IDs will go in which treatments, we can use the `sample()` function.    
+
+First, let's learn about the sample function: 
+```{r}
+?sample
+```
+
+##### Learning by doing: `sample`
+
+Let's try it! 
+```{r}
+crd_samp<-sample(ids, replace=FALSE)
+crd_samp
+```
+
+* What happened?
+```{}
+ANSWER HERE:
+```
+
+
+* Is the order of numbers that same as your neighbor's? 
+```{}
+ANSWER HERE:
+```
+
+Now let's try assigning our IDs to treatments using a matrix.  Here `nrow` will correspond to the number of treatment.  
+
+Let's say that
+
+* Row 1 = Treatment A
+* Row 2 = Treatment B
+* Row 3 = Treatment C
+* Row 4 = Treatment D (Control) 
+
+### A. Completely Randomized Design
+```{r}
+## Completely randomized design
+## choose ID's and randomly assign to treatments
+
+# nrow will be the number of treatments
+crd_mat<-matrix(crd_samp, nrow=4)
+crd_mat
+
+# we can also rename the rows
+rownames(crd_mat)<-c("Treat A", "Treat B", "Treat C", "Treat D")
+
+crd_mat
+```
+
+#### Making an Experiment Map!
+
+We can use the matrix from the previous step to know which experimental units are in their respective treatments; however, it might be easier if we made a map that showed where their treatments were located.  To accomplish this task we'll need to understand `for` loops, the `%in%` operator, and conditions. 
+
+##### A. `for` loops
+
+For loops can be used to repeat the same basic task over and over again.  Check this one out!  What is it doing? 
+```{r}
+## FOR LOOPS
+for(i in 1:5){
+  print(i)
+}
+```
+
+##### B. `%in%` operator
+
+This operator will identify if the element specified on the left hand side is contained by the set specified on the right hand side,$A \subset B$.
+```{r}
+## %in% operator
+1 %in% c(1, 2, 3)
+5 %in% c(1, 2, 3)
+```
+
+##### Bringing it all together!
+
+This is a little complicated, so I will provide the code.  Let's pay careful attention to how each piece is working together. 
+
+```{r}
+## Making a map of this design
+## here we will learn to create a loop and how to write conditionals
+treats<-matrix(nrow=24)
+for(i in 1:24){
+  if(i %in% crd_mat[1,]){
+    treats[i]<-"A"
+  }
+  if(i %in% crd_mat[2,]){
+    treats[i]<-"B"
+  }
+  if(i %in% crd_mat[3,]){
+    treats[i]<-"C"
+  }
+  if(i %in% crd_mat[4,]){
+    treats[i]<-"D"
+  }
+}
+
+treats
+
+## make the map!
+expDes<-matrix(treats, nrow=4)
+expDes
+
+```
+
+##### Food for Thought: 
+
+* How does this look?
+
+* Does it appear "random"?
+
+Note: We might be tempted to think that just because there are clusters of the same treatment together that the design is not random; however, we used a random mechanism to assign IDs to treatment.  Using a random mechanism does not guarantee that there won't be these clusters. 
+
+#### Matrix Indexing
+
+We have been using matrices a lot!  When working with matrices its a good idea to know can we can call specific subsets within the matrix.  Every cell of a matrix has an address which is defined by the row and column that its in.  
+
+In the following examples we will see how this can be used:
+
+##### Learning by doing!
+
+* What treatments is to be assigned in row 3 column 2?
+```{r}
+# EXAMPLE: 
+expDes[3,2]
+```
+
+* What treatments are to be assigned in row 3?
+```{r}
+# INSERT CODE HERE #
+```
+
+* What treatments are to be assigned in column 4?
+```{r}
+# INSERT CODE HERE #
+```
+
+* If a cat knocked over the plants in the 4th row what would the rest of my experiment look like?
+```{r}
+# INSERT CODE HERE #
+```
+
+### B. Blocked Design
+
+If we know that there is a natural gradient or more homogeneous subgroups within our experiment we might consider blocking to improve our design.  The hallmark of a *completely randomized block design* is that every treatment must be present in ever block.  This allows us to avoid confounding treatment with block. 
+
+In this example columns are used as blocks.  We will randomly assign where the treatments are placed within which block. 
+
+```{r}
+## STEP: Blocked Design
+## example: if there is a gradient across columns there are 6 blocks
+
+# we will learn how to concatenate here
+# start with an emply list
+blockTreats<-c()
+for(i in 1:6){
+  thisSample<-sample(c("A", "B", "C", "D"), replace=FALSE)
+  blockTreats<-c(blockTreats, thisSample)
+}
+  
+blockDes<-matrix(blockTreats, nrow=4)
+blockDes
+```
