@@ -1,0 +1,163 @@
+---
+title: 'FALL 2023 DATA151: Midterm #1 (R Section)'
+author: "STUDENT NAME"
+date: "TODAYS DATE"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Sports Ball
+
+Please read ALL descriptions and directions. 
+
+#### Description: 
+
+At the 1976 Pro Bowl, Ray Guy, a punter for the Oakland Raiders, punted a ball that hung mid-air long enough for officials to question whether the pigskin was filled with helium. The ball was found to be filled with air, but since then many have tossed around the idea that a helium-filled football would outdistance an air-filled one. 
+
+Students at Ohio State University conducted an experiment to test this myth. They used two identical footballs, one air filled with air and one filled with helium. Each football was kicked 39 times and the two footballs were alternated with each kick.
+
+##### Citation: 
+
+* OpenIntro: https://www.openintro.org/data/index.php?data=helium
+
+* Lafferty, M. B. (1993), "OSU scientists get a kick out of sports controversy, "The Columbus Dispatch (November, 21, 1993), B7.
+
+#### Part 1: Getting Started (5 points - 1 point each!)
+
+* Create a new R markdown document for the Midterm template 
+* Create a folder called "MIDTERM_1"
+* Save new Rmd in your R Studio Cloud as "data151_mid1_YOURNAME"
+* Change the author and date in the heading of the R markdown
+* Leave yourself at least 3 comments in your code chunks
+
+#### Part 2: Installing the package  (2.5 points)
+
+In order to access these data you will need to install the package `openintro`.
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+#### Part 3: Library (2.5 points)
+
+Now you actually need to call the library to be able to get the data.  
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+#### Part 4: Bring the Data into the Global Environment (2.5 points)
+
+These data are simply called `helium`.  Please call them into the global environment
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+At this point it may also be helpful to read about the dataset. 
+
+#### Part 5: Structure 
+
+##### A) (2.5 points) Look at the structure of your data.  
+
+How many observations are there? 
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+##### B) (2.5 points) Look at the first six rows of the data frame.  
+
+Are these data tidy?  Why are why not?  If you do not think these data are tidy, what problems do you think you might encounter when working in R?
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+#### Part 6: WRANGLE!
+
+Regardless of your answer above, please run the following code (provided by Professor Smalley) to wrangle your data.  We have now created a new data frame called `football` with the variables `trial`, `air`, and `yards`.  
+
+*IMPORTANT*: You will be using the data frame `football` for the rest of the parts.
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+### WRANGLE
+football<-helium%>%
+  gather("air", "yards", -trial)
+
+### LOOK AT THE DATA
+head(football)
+
+### STRUCTURE
+str(football)
+```
+
+##### EXTRA CREDIT: 5 points 
+
+We haven't seen the function `gather` before.  Given the output above, what do you think the function `gather` does?
+
+```{}
+EXTRA CREDIT
+YOUR ANSWER HERE
+
+```
+
+
+#### Part 7: Understanding the study (5 points)
+
+
+##### A): What is the response? (2.5 points)
+
+```{}
+YOUR ANSWER HERE
+
+```
+
+##### B): What is the explanatory variable (treatment)? (2.5 points)
+
+```{}
+YOUR ANSWER HERE
+
+```
+
+#### Part 8: Make a hypothesis (2.5 points)
+
+Create a hypothesis about the effect of air type, without first looking at the data. 
+
+```{}
+YOUR ANSWER HERE: 
+
+```
+
+#### Part 9: Visualize (2.5 points)
+
+Explore the relationship between air type and yards traveled by creating a boxplot.  
+
+HINT: Please look at your 3A R class notes
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+#### Part 10: Observations (2.5 points)
+
+What are your observations from this plot? Does your hypothesis (from Part 8) appear to be supported? Explain.
+
+```{}
+YOUR ANSWER HERE: 
+
+```
