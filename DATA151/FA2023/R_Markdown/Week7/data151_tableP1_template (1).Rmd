@@ -1,0 +1,330 @@
+---
+title: 'DATA151: Tables and Bars (Part I)'
+author: "STUDENT NAME HERE"
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+### Learning Objectives
+
+In this lesson students will learn to apply categorical data analysis methods to data sets with fundamentally different structures. 
+
+* Work with cross-tabulated data
+* Create univarite tables to show marginal distributions 
+* Create two-way tables to show joint and conditional distributions
+* Create bar graphs and assess which type of bar graph is best for a given scenario (stacked, dodged, filled)
+
+The `tidyverse` package is needed for these examples
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+
+### Example #1: Titanic Data
+
+#### Step 0: Install the package
+
+```{r}
+#install.packages("titanic")
+library(titanic)
+```
+
+#### Step 1: Load the data
+
+```{r}
+data("Titanic")
+
+str(Titanic)
+```
+
+#### Step 2: Reformat as data.frame
+
+If we want to be able to use all our helpful `dplyr` verbs, we need to reformat this table as a `data.frame`.
+
+```{r}
+Titanic<-as.data.frame(Titanic)
+```
+
+#### Step 3: One-way Table
+
+Create a one-way frequency table for the distribution of class.
+
+```{r}
+## frequency table for class
+## can you think of how you would do this in dplyr?
+titanClass<-Titanic%>%
+## YOUR CODE HERE ##
+
+titanClass
+```
+
+##### Relative Frequency Table
+
+We might also want to display proportions.
+
+```{r}
+## What could we do if we want proportions?
+
+titanClassProp<-titanClass%>%
+## YOUR CODE HERE ##
+
+titanClassProp
+```
+
+#### Step 4: Univariate Bar Graphs
+
+Let's visualize this distribution. 
+
+##### A. Simple 
+
+Since the data are already cross-tabulated we must specify the height of the bars with `y=Freq` and `stat = "identity"`.
+
+```{r}
+## bar graphs
+## YOUR CODE HERE ##
+```
+
+
+##### B. Color
+
+Since bars are two dimensional the `color` aesthetic only outlines bars. 
+
+What is going on in this graph?
+
+```{r}
+## add color
+## YOUR CODE HERE ##
+```
+
+
+##### C. Fill
+
+```{r}
+## oops! let's use fill
+## YOUR CODE HERE ##
+```
+
+##### D. Proportions
+
+If we want the height of the bar to be a non-integer value (such as proportions) we can use `geom_col`.
+
+```{r}
+## change y-axis
+## YOUR CODE HERE ##
+```
+
+##### E. Recipe for a Pie Graph
+
+###### Step 1. 
+
+Make a stacked bar graph.
+
+```{r}
+## Pie chart
+## 1) Start with a stacked bar
+## YOUR CODE HERE ##
+```
+
+###### Step 2. 
+
+Use polar coordinates
+
+```{r}
+## 2) plot it in a circle
+ggplot(Titanic, aes(x=1, y=Freq, fill=Class))+
+  geom_bar(stat = "identity")+
+  coord_polar("y", start=0)+
+  theme_void()
+```
+
+#### Step 4: Two-way Table
+
+```{r}
+## Joint distributions
+## YOUR CODE HERE ##
+```
+
+#### Step 5: Types of Distributions
+
+##### A. Joint Distribution
+
+```{r}
+## Now Joint
+titanJoint<-titan2Way%>%
+## YOUR CODE HERE ##
+
+sum(titanJoint$joint)
+```
+
+##### B. Marginal Distribution
+
+```{r}
+## Marginal Class
+titanMargClass<-titanJoint%>%
+## YOUR CODE HERE ##
+titanMargClass
+
+## Marginal Survival
+titanMargSurv<-titanJoint%>%
+## YOUR CODE HERE ##
+titanMargSurv
+```
+
+##### C. Conditional Distribution
+
+```{r}
+## Conditional on Class
+titanCondClass<-titan2Way%>%
+## YOUR CODE HERE ##
+
+titanCondClass
+```
+
+
+#### Step 6: Bar Graphs with Two Variables
+
+##### A. Stacked (default)
+
+```{r}
+## stacked
+## YOUR CODE HERE ##
+```
+
+##### B. Side-by-side (dodge)
+
+```{r}
+## side-by-side
+## YOUR CODE HERE ##
+```
+
+##### C.  Filled
+
+```{r}
+## filled
+## YOUR CODE HERE ##
+```
+
+##### CAUTION: Pies
+
+It is cognitively very difficult to compare pies!
+
+##### Comparing Across Survival 
+
+```{r}
+## comparing pies
+ggplot(Titanic, aes(x=1, y=Freq, fill=Class))+
+  geom_bar(stat = "identity", position = "fill")+
+  facet_grid(.~Survived)+
+  coord_polar("y", start=0)+
+  theme_void()
+```
+
+
+
+##### Comparing Across Class
+
+```{r}
+## USING FACET_GRID
+ggplot(Titanic, aes(x=1, y=Freq, fill=Survived))+
+  geom_bar(stat = "identity", position = "fill")+
+  facet_grid(.~Class)+
+  coord_polar("y", start=0)+
+  theme_void()
+
+## USING FACET_WRAP
+ggplot(Titanic, aes(x=1, y=Freq, fill=Survived))+
+  geom_bar(stat = "identity", position = "fill")+
+  facet_wrap(.~Class, nrow=2, ncol=2)+
+  coord_polar("y", start=0)+
+  theme_void()
+```
+
+### Activity: FiveThiryEight
+
+### A. Read the Article 
+
+*"Voter Registrations Are Way, Way Down During the Pandemic"* (Jun 26, 2020) by Kaleigh Rogers and Nathaniel Rakich
+
+https://fivethirtyeight.com/features/voter-registrations-are-way-way-down-during-the-pandemic/ 
+
+
+### B. Discuss in Small Groups 
+
+1. How are graphics used to tell the author’s story?
+
+2. What geometries are used?
+
+### C. The Data
+
+What does the raw data look like?
+
+```{r}
+# Import data
+vreg<-read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/voter-registration/new-voter-registrations.csv",
+               header=TRUE)
+
+
+head(vreg)
+
+```
+
+### D. Processing the Data
+
+#### Relevel 
+
+Relevel the data so that its in the right order: 
+
+```{r}
+# Level the Month variable so that its in the right order (ie not alphabetical)
+vreg$Month<-factor(vreg$Month,
+                   levels=c("Jan", "Feb", "Mar", "Apr", "May"))
+
+```
+
+
+#### Tidy
+
+```{r}
+### USE spread() FROM tidyr
+vregYear<-vreg%>%
+  spread(Year, New.registered.voters)
+
+### RENAME THE COLUMNS
+colnames(vregYear)<-c("Jurisdiction", "Month", "Y2016", "Y2020")
+
+
+```
+
+
+#### Mutate
+
+Add change in registration. 
+
+```{r}
+### mutate() FROM dplyr()
+vregChange<-vregYear%>%
+  mutate(change=Y2020-Y2016)
+
+```
+
+
+### E. Recreate the graphic
+
+<https://fivethirtyeight.com/wp-content/uploads/2020/06/rogers-rakich.VOTER-REGISTRATION.0622.png?w=575>
+
+
+```{r}
+# type code/answer here
+
+```
+
+#### Other hints
+* You can add another column to define color
+* Pay careful attention to the axes, you might want to read the help file for facet_wrap
+
+
