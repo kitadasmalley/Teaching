@@ -1,0 +1,160 @@
+---
+title: 'DATA151: Tables and Bars (Part II)'
+author: "STUDENT NAME HERE"
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+### Learning Objectives
+
+In this lesson students will learn to apply categorical data analysis methods to data sets with fundamentally different structures. 
+
+* Work with raw data
+* Create univariate tables to show marginal distributions 
+* Create two-way tables to show joint and conditional distributions
+* Create bar graphs and assess which type of bar graph is best for a given scenario (stacked, dodged, filled)
+
+The `tidyverse` package is needed for these examples
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+
+### Example #2: Immigration Politics
+
+Nine-hundred and ten (910) randomly sampled registered voters from Tampa, FL were asked if they thought workers who have illegally entered the US should be (i) allowed to keep their jobs and apply for US citizenship, (ii) allowed to keep their jobs as temporary guest workers but not allowed to apply for US citizenship, or (iii) lose their jobs and have to leave the country. The results of the survey by political ideology are shown below.
+
+From Questions from Introduction to Modern Statistics.
+
+#### Step 0: Install the package
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("openintro")
+library(openintro)
+```
+
+#### Step 1: Load the Data 
+
+```{r}
+data("immigration")
+str(immigration)
+```
+
+#### Step 2: Re-level categories
+
+By default R will order a variable alphabetically, but we might not want that. 
+
+```{r}
+immigration$political<-as.character(immigration$political)
+immigration$political<-factor(immigration$political, 
+                              levels = c("conservative","moderate", "liberal"))
+
+```
+
+In this dataset the rows represent individuals.  In the following example we will learn how to use the `table` and  `prop.table` functions. 
+
+#### Question 1
+
+What percent of these Tampa, FL voters identify themselves as conservatives? 
+
+```{r}
+# Table for Political affiliation
+# use table() function
+tabPol<-table(immigration$political)
+
+# the prop.table() function must take a table object
+prop.table(tabPol)
+
+# create a graph to display the distribution
+ggplot(immigration, aes(x=political, fill=political))+
+  geom_bar()
+
+```
+
+
+#### Question 2
+
+What percent of Tampa, FL voters are in favor of the citizenship option?
+
+```{r}
+# Table for citizenship response
+# use table() function
+# INSERT CODE HERE #
+
+# use prop.table() 
+# INSERT CODE HERE #
+
+# create a graph to display the distribution
+# INSERT CODE HERE #
+
+# stacked bar graph
+# INSERT CODE HERE #
+
+# pie graph
+# INSERT CODE HERE #
+```
+
+#### Question 3
+
+What percent of these Tampa, FL voters identify themselves as conservatives and are in favor of the citizenship option?
+
+```{r}
+## conservative and citizen
+# Row then col
+# INSERT CODE HERE #
+
+## joint
+# INSERT CODE HERE #
+```
+
+#### Question 4
+
+What percent of these Tampa, FL voters who identify themselves as conservatives are also in favor of the citizenship option? What percent of moderates share this view? What percent of liberals share this view?
+
+```{r}
+## marginal prop
+# INSERT CODE HERE #
+
+# INSERT CODE HERE #
+```
+
+### Example #3: Gender Bias
+
+In 1973, UC Berkeley became "one of the first universities to be sued for sexual discrimination" (with a statistically significant difference)
+
+#### Step 1: Load the data
+
+```{r}
+## UC Berk
+data(UCBAdmissions)
+str(UCBAdmissions)
+```
+
+#### Step 2: Reformat as data.frame
+
+```{r}
+cal<-as.data.frame(UCBAdmissions)
+```
+
+#### Step 3: Aggregated Bar Graph
+
+```{r}
+# INSERT CODE HERE #
+```
+
+#### Step 4: Separated by Department
+
+```{r}
+# INSERT CODE HERE #
+```
+
+#### Simpson's Paradox
+
+*How does this happen?*
+
+“The simple explanation is that women tended to apply to the departments that are the hardest to get into, and men tended to apply to departments that were easier to get into. (Humanities departments tended to have less research funding to support graduate students, while science and engineer departments were awash with money.) So women were rejected more than men. Presumably, the bias wasn’t at Berkeley but earlier in women’s education, when other biases led them to different fields of study than men.”
