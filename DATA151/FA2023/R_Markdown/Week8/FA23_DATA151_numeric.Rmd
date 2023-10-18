@@ -1,0 +1,207 @@
+---
+title: 'DATA151: Numerical Summaries and Graphics'
+author: "INSERT STUDENT NAME HERE"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+### Learning Objectives
+
+In this lesson students will to work with numeric data to create graphics and summaries. 
+
+### Example : Oregon Air Quality Index (AQI)
+
+These data were reported on AirNow on October 19, 2022 for the states of Oregon, Washington, and Colorado.
+
+https://www.airnow.gov/state/?name=oregon
+
+
+#### Step 0: Library Tidyverse
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+#### Step 1: Load the Data
+
+```{r}
+aqi<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/fireAQI_OrCoWa_10192022.csv", 
+                   header=TRUE)
+
+orAQI<-aqi%>%
+  filter(State=="Oregon")
+```
+
+#### Step 2: Histogram
+
+```{r}
+# Try playing with changing the number of bins
+
+## INSERT CODE HERE ##
+```
+
+When we look at a histogram, we want to describe the following characteristics: 
+
+* Shape
+
+  * Skewness vs Symmetry
+  * Modality: How many peaks
+
+* Center
+  * Described by mean or median
+  
+* Spread
+  * Described by standard deviation or IQR
+  
+* Outliers
+
+
+#### Step 3: Density Plot
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+#### Step 4: Box Plot
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+#### Step 5: Quantiles
+
+Quantiles split up a data set into four even parts given a relative ordering.
+
+```{r}
+## This will give the five number summary
+## INSERT CODE HERE ##
+
+## If we only want a given quantiles use
+## INSERT CODE HERE ##
+```
+
+##### IQR (Interquartile range)
+
+```{r}
+#q1<-35.75
+#q3<-115.50
+#iqr<-q3-q1
+#iqr
+```
+
+##### Defining Outliers
+
+We create "fences" to highlight possible outliers in our data.  
+
+A data point is highlighted as an outlier if
+
+* it is greater than $Q_3+1.5\times IQR$
+* it is less than $Q_1-1.5\times IQR$
+
+```{r}
+## upper fence
+#upper<-q3+1.5*iqr
+#upper
+
+## lower fence
+#lower<-q1-1.5*iqr
+#lower
+```
+
+Can we find any outliers?
+
+```{r}
+#orAQI%>%
+#  filter(AQI < lower | AQI > upper)
+```
+
+#### Step 6: Popular Numeric Summaries
+
+##### Sample Mean
+
+The average (or mean) is the most commonly used metric for center. 
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+##### Sample Standard Deviation
+
+The standard deviation is the most common metric for spread.  It is in the same units that the data are in gives a rough sense of how far data points are from the sample mean. 
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+#### Step 7: Critical Thinking about Metrics of Center
+
+How do we know when to use mean or median as a measure of center?
+
+There is a relationship between mean, the median and the shape of the data.
+
+* IF THE DATA ARE SYMMETRIC (or approximately symmetric):
+
+  * In perfectly symmetric data, the mean and the median are equal.
+  * In data that is approximately symmetric, the mean and the median are close to the same value.
+  
+* IF THE DATA ARE SKEWED:
+
+  * The mean is heavily influenced by very large (or small) values in the data set relative to the rest of the data, it is usually more appropriate to use the median when describing the center of skewed data.
+
+#### Step 8: Comparing Groups
+
+##### Numeric Summaries
+
+How does the air quality compare in Oregon, Washington, and Colorado?
+
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+What do you observe?
+
+##### Graphics
+
+Here is a histogram where the y-axis is count.
+
+```{r}
+### Histogram (Counts)
+## INSERT CODE HERE ##
+```
+
+
+We can change the y-axis to density (proportions).
+
+```{r}
+### Histogram (Density)
+## INSERT CODE HERE ##
+```
+
+Since there is a spike in the Colorado distribution, this distorts the scale for the distributions for Oregon and Washington.  We can fix this by allowing the y-axis to freely vary. 
+
+```{r}
+### Histogram (Density - Free_y)
+## INSERT CODE HERE ##
+```
+
+We can also make a density plot!
+
+```{r}
+### Density Plot (free_y)
+## INSERT CODE HERE ##
+```
+
+But, my favorite is a side-by-side boxplot
+
+```{r}
+# BOXPLOT
+## INSERT CODE HERE ##
+```
