@@ -1,0 +1,69 @@
+---
+title: 'DataViz: United States Map Demo'
+author: "YOUR NAME HERE"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Motivating Example: 
+
+In this demo we will be looking voter turn out data from IPUMS from 2016 and 2018. 
+
+```{r}
+vote<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA502/main/FALL2021/Data/voterTurnOut1618.csv",
+              header=TRUE, 
+              stringsAsFactors = FALSE)
+```
+
+### Step 1: State Polygons 
+
+Import the shapes using the `usmaps` package:
+
+```{r}
+#install.packages("usmap")
+library(usmap)
+
+states <- usmap::us_map()
+
+head(states)
+```
+
+### Step 2: Joining
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+## INSERT CODE HERE ##
+```
+
+### Step 3: Plot with `ggplot`
+
+#### A) Default coloring
+```{r}
+this.year=2016
+
+## INSERT CODE HERE ##
+```
+
+#### B) Color accessible
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("viridis")
+library(viridis)
+
+## INSERT CODE HERE ##
+```
+
+#### C) Basic Interaction with `plotly`
+
+```{r warning=FALSE, message=FALSE}
+#install.packages("plotly")
+library(plotly)
+
+## INSERT CODE HERE ##
+```
+
