@@ -1,0 +1,109 @@
+---
+title: 'MiniLesson: Tables'
+author: "Kitada Smalley"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Halloween Candy Ranking
+
+Read the fivethirtyeight article and watch the short movie
+
+https://fivethirtyeight.com/videos/the-ultimate-halloween-candy-power-ranking/
+
+Here’s some documentation on these data:
+
+https://github.com/fivethirtyeight/data/tree/master/candy-power-ranking
+
+#### Step 0: Load the Data
+
+```{r warning=FALSE, message=FALSE}
+candy<-read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/candy-power-ranking/candy-data.csv",
+ header=TRUE)
+
+library(tidyverse)
+```
+
+
+#### Step 1: Structure
+
+```{r}
+## YOUR CODE HERE ##
+```
+#### Step 2: One-way Table
+
+How many candies have chocolate? 
+
+```{r}
+# 1 = Yes Chocolate
+# 0 = No Chocolate
+tabChoc<-## YOUR CODE HERE ##
+tabChoc
+```
+
+What is the probability if you randomly choose a candy it will have chocolate? 
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+
+#### Step 3: Simple Bar Graph (1-Var)
+
+```{r}
+candy$chocolate<-as.factor(candy$chocolate)
+
+## YOUR CODE HERE ##
+
+```
+
+
+#### Step 4: Two-way table
+
+How many candies have chocolate and caramel?
+
+```{r}
+# Row = Chocolate
+# Col = Caramel
+tabChocCarm<-## YOUR CODE HERE ##
+tabChocCarm
+
+```
+
+If I randomly selected a candy, what is the probability that its chocolate and caramel? 
+
+```{r}
+# Joint
+## YOUR CODE HERE ##
+
+```
+If I randomly selected a candy and it was chocolate, what is the probability that its chocolate and caramel? 
+
+```{r}
+# Conditional
+## YOUR CODE HERE ##
+
+```
+
+#### Step 5: Bar Graphs with 2-Vars
+
+```{r}
+candy$caramel<-as.factor(candy$caramel)
+
+# stacked
+## YOUR CODE HERE ##
+
+# dodge
+## YOUR CODE HERE ##
+
+# fill
+## YOUR CODE HERE ##
+
+```
+
+

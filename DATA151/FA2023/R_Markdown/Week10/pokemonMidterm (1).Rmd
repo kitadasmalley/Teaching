@@ -1,0 +1,173 @@
+---
+title: 'Midterm #2: Gotta Catch Em All!'
+author: "YOUR NAME HERE"
+date: "DATE HERE"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### How to Start:
+* Create a new R markdown document for the Midterm template 
+* Save new Rmd in your R Studio Cloud as "data151_mid2_YOURNAME"
+* Change the author in the heading of the R markdown
+* Change the date
+
+## Pokemon
+
+For this assessment you will use a dataset about Pokemon.  I wrangled these data from two different sources on Kaggle: 
+
+* <https://www.kaggle.com/datasets/abcsds/pokemon>
+* <https://www.kaggle.com/datasets/rounakbanik/pokemon>
+
+```{r}
+pokemon<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/pokemonMid2.csv")
+```
+
+### Background information: 
+
+For decades, kids all over the world have been discovering the enchanting world of Pokémon (an abbreviation for Pocket Monsters). Many of those children become lifelong fans. Today, the Pokémon family of products includes video games, the Pokémon Trading Card Game (TCG), an animated series, movies, toys, books, and much more. 
+
+Pokémon are creatures of all shapes and sizes who live in the wild or alongside their human partners (called “Trainers”). During their adventures, Pokémon grow and become more experienced and even, on occasion, evolve into stronger Pokémon. Hundreds of known Pokémon inhabit the Pokémon universe, with untold numbers waiting to be discovered!
+
+Source: <https://www.pokemon.com/us/parents-guide/>
+
+### Variables
+
+Learn about the variables available:
+
+```{r}
+str(pokemon)
+```
+
+### Question 1: Generations
+
+When Professor Smalley was a child she used to collect Pokemon cards.  In the first generation of Pokemon there were *"150 or more to see"*.  
+
+**Question**: (4 points)  Which generation introduced the most new Pokémon and how many were in that generation? 
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+
+Look up the PokéRap after class if you've never heard the song. 
+
+### Question 2: Types
+
+**Question**: (4 points)  Looking only at the main type.  How many different types of Pokemon are there?  Which Pokemon type are there the most species of?
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+### Question 3: Gotta Catch Em All! (Catch Rate)
+
+Each species of Pokémon has a catch rate that applies to all its members. When a Poké Ball is thrown at a wild Pokémon, the game uses that Pokémon's catch rate in a formula to determine the chances of catching that Pokémon. Higher catch rates mean that the Pokémon is easier to catch, up to a maximum of 255.
+
+Source: <https://bulbapedia.bulbagarden.net/wiki/Catch_rate>
+
+**Question**: (4 points) Create a histogram plot for the distribution of `capture_rate`.  Test different amounts of bins.  What number of bins best illustrates the shape of the data?  
+
+NOTE: There is not one right answer, this is about articulating your point and providing support for your choice. 
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+
+
+### Question 4: Fastest
+
+**Question**: (4 points) Create a new data frame to show which Pokemon type has the fastest average speed.
+
+State which Type has the fastest average speed and what that speed is.
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+### Question 5: Legendary!
+
+Legendary Pokémon are a group of incredibly rare and often very powerful Pokémon, generally featured prominently in the legends and myths of the Pokémon world.
+
+Source: <https://bulbapedia.bulbagarden.net/wiki/Legendary_Pok%C3%A9mon>
+
+**Question**: (4 points) Create a new dataframe to summarise the following information for each Legendary status group: 
+
+* Number of Pokemon
+* Average Speed
+* Average Hit Points
+* Average Capture Rate
+
+State your observations. 
+
+```{r}
+## YOUR ANSWER HERE ##
+```
+
+
+### Question 6: Compare Speed
+
+**Question**: (4 points) Create a side-by-side boxplot to show the distribution of speeds by Legendary.  Use the proper aesthetic so that each box contains the color for the Legendary status. 
+
+State your observations. 
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+
+### Question 7: Shape of Distribution
+
+**Question**: (4 points) Now, just looking at water type Pokemon, describe the shape of the distribution for the sum of attack points (`SumOfAttack')?  Use the most appropriate geometries to create plot(s).
+
+Be sure to include commentary on symmetry/skew, modality, spread, and outliers. 
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+### Question 8: Imperial System
+
+**Question**: (4 points) Please convert the values for height and weight to the imperial system, which is standard in the United States.
+
+* 1 m (meter) = 39.3701 inches
+* 1 kg (kilogram) = 2.205 pounds
+
+Create a new data frame to accomplish this so that we can use these values in subsequent Parts 8, 9, and 10.
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+### Question 9: 
+
+**Question**: (4 points) It appears that the distributions for height and weight are skewed.  When there is skew in your data, what metric should be used for center?  Support your answer. 
+
+Using this metric, summarise your data to find the center value for the height and weight for each Type.   
+
+HINT: CAUTION WITH NA's.
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+
+
+### Question 10: Height Weight Ratio
+
+**Question**: (4 points) Create a new column for the height (in) / weight (lbs) ratio for each Pokemon.  Then find the the Pokemon type with the highest average height-weight ratio. 
+
+HINT: CAUTION WITH NA's.
+
+```{r}
+### YOUR ANSWER HERE ###
+```
+
+
+
