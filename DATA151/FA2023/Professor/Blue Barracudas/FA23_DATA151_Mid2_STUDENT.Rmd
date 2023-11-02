@@ -1,0 +1,182 @@
+---
+title: 'FALL 2023 DATA151: Midterm #2 (R Section)'
+author: "INSERT STUDENT NAME HERE"
+date: "TODAYS DATE"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# I Eat DATA for Breakfast!
+
+Please read ALL descriptions and directions. 
+
+### Description: 
+
+A nutritionist at the Food and Drug Administration is studying the effects of cereal marketing on family meal
+choices. In particular, she would like to understand how cereal manufacturers market their products in
+grocery stores. She became interested in doing this study after noticing how the
+cereal was being restocked one day in her local grocery store. The store personnel
+were restocking the cereal shelves based on a reference sheet that told them
+where everything was to be placed. The placement of each cereal brand seemed
+very deliberate. 
+
+To gather data for her study, the nutritionist goes to the local grocery store and records data about cereal nutritional claims and shelf location for 77 cereals. 
+
+
+#### Citation: 
+
+* Data from Kaggle: https://www.kaggle.com/datasets/crawford/80-cereals
+
+* Motivation modified from: https://www.hawkeslearning.com/Statistics/chapter_project_pdfs/DIS3/ChapterProject_TheBreakfastofChampions_Student.pdf
+
+## Getting Started (5 points - 1 point each!)
+
+* Create a new R markdown document for the Midterm template 
+* Create a folder called "MIDTERM_2"
+* Save new Rmd in your R Studio Cloud as "data151_mid2_YOURNAME"
+* Change the author and date in the heading of the R markdown
+
+## Part 0: Call in the Data and Tidyverse (5 points)
+
+* (Provided) Import the data from Prof. Smalley's github 
+* Look at the structure of the data
+
+```{r}
+## IMPORT DATA
+cereal<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/main/DATA151/FA2023/Professor/DATA/cereal.csv",
+                 header=TRUE)
+
+## CHANGE SHELF LOCATION TO FACTOR
+cereal$shelf<-as.factor(cereal$shelf)
+```
+
+#### Look at the structure of your data. (3 points) 
+
+```{r}
+### INSERT YOUR CODE HERE ###
+```
+
+#### Call in the `tidyverse` (2 points)
+
+```{r}
+### INSERT YOUR CODE HERE ###
+```
+
+
+## Part 1: Cereal Brands (5 points and Extra Credit)
+
+Seven cereal brands (manufacturers) are represented in these data: 
+
+* A = American Home Food Products;
+* G = General Mills
+* K = Kelloggs
+* N = Nabisco
+* P = Post
+* Q = Quaker Oats
+* R = Ralston Purina
+
+#### EXTRA CREDIT: 3 points
+
+It would be more useful to have labels within the data frame.  Use the data frame created by Prof Smalley and join it onto the main `cereal` data frame.  After you have joined on the labels you can continue to work with the resulting dataset for the remainder of the midterm.   
+
+NOTE this is not needed to complete the rest of the midterm; however, it does make it nicer to work with.  
+
+```{r}
+mfrLabels<-data.frame(mfr=c("N", "Q", "K", "R", 
+                            "G", "P", "A"), 
+                      manufacturer=c("Nabisco", "Quaker Oats", 
+                                     "Kelloggs", "Ralston Purina", 
+                                     "General Mills", "Post", 
+                                     "American Home Food Products"))
+
+### INSERT YOUR CODE HERE ### 
+
+```
+
+
+
+#### Question 1: 5 points
+
+Count how many cereals there are for each brand and order them by most to least.  Which brand produces the most cereals? 
+
+```{r}
+### INSERT YOUR CODE HERE ### 
+```
+
+## Part 2: Daily Potassium (5 points)
+
+Based on a 2000 calorie diet, the recommended Daily Value (DV) of Potassium is 4,700 milligrams (mg) per day.  
+
+#### Question 2: 5 points
+
+Create a new data frame that has a new column that represents the percent of the Daily Value of Potassium in one serving of the cereal.  The amount of potassium in the data set is in milligrams.  
+
+Which cereal has the highest daily value percent of potassium per serving?  
+
+```{r}
+### INSERT YOUR CODE HERE ###
+```
+
+## Part 3: Total Carbohydrates (5 points)
+
+Total carbohydrate on the label includes all three types of carbohydrate: sugar, starch and fiber.
+
+#### Question 3: 3 points 
+
+Create a new data frame that contains a new variable, call it `totalCarbs`, which is the sum of `fiber`, `carbo`, and `sugars`.  
+
+Which cereal has the least total carbohydrates per serving? 
+
+```{r}
+### INSERT CODE HERE ###
+```
+
+#### Question 4: 2 points
+
+Use the data frame you create in the previous question, add a column that represents the ratio of fiber to total carbohydrates.  
+
+```{r}
+### INSERT CODE HERE ###
+```
+
+## Part 4: Distribution of Rating (5 points)
+
+#### Question 5: 5 points
+
+Describe the shape of the distribution for the consumer ratings (`rating`).  Use the most appropriate geometries to create plot(s).
+
+Be sure to include commentary on symmetry/skew, modality, spread, and outliers. 
+
+```{r}
+### YOUR ANSWER HERE ###
+
+```
+
+## Part 5: Shelf Location (5 points)
+
+It is commonly thought that cereals are displayed in certain shelf locations at a market to draw the attention of children.  In this dataset, the variable `shelf` is the display shelf (1, 2, or 3, counting from the floor).  
+
+#### Question 6: 2 points
+
+Make a hypothesis about shelf location (shelf) and the sugar content in a serving of cereal.
+
+```{}
+YOUR ANSWER HERE
+```
+
+#### Question 7: 3 points
+
+Create a side-by-side boxplot to show the distribution of sugar content across shelf location.  Use the proper aesthetic so that each box contains the color for the shelf location. 
+
+State your observations. 
+
+```{r}
+### INSERT YOUR CODE HERE ###
+```
+
