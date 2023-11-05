@@ -1,0 +1,123 @@
+---
+title: "DATA151: Bivariate Relationships"
+author: "STUDENT NAME HERE"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Learning Objectives: 
+
+Students will learn to create scatterplots and describe the relationships between two numeric variables. 
+
+### Example: Take A Hike!
+
+#### STEP 1: Load the data: 
+
+```{r}
+body_wgt<-c(120, 187, 109, 103, 131, 165, 158, 116)
+backpack_wgt<-c(26, 30, 26, 24, 29, 35, 31, 28)
+
+backpack_df<-data.frame(body_wgt, backpack_wgt)
+```
+
+Which variable should be the response and which should be the explantory? 
+
+```{}
+## YOUR ANSWER HERE ##
+```
+
+#### STEP 2: Scatterplot
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+## YOUR CODE HERE ####
+
+```
+
+#### STEP 3: Describe
+
+When looking at a scatterplot you want to be able to describe the overall pattern and for striking departures from that pattern.
+
+You can describe the overall pattern of a scatterplot by the:
+
+* direction – positive or negative
+* form – linear or non-linear
+* strength – strong (points close together) or weak (points spread out)
+* outliers - an individual value that falls outside the overall pattern of the relationship
+
+How would you describe the above scatterplot? 
+```{}
+### YOUR ANSWER HERE ###
+```
+
+#### STEP 4: Correlation Coefficient
+
+```{r}
+### YOUR CODE HERE ###
+```
+
+What happens when you switch the order of the variables?
+
+```{r}
+### YOUR CODE HERE ###
+```
+
+#### STEP 5: Activity
+
+**First**: Load in the data
+
+```{r}
+data("anscombe")
+str(anscombe)
+```
+
+**Directions**: 
+
+If your birthday is: 
+
+* January - March: Use variables `x1` and `y1`
+* April - June: Use variables `x2` and `y2`
+* July - September: Use variables `x3` and `y3`
+* October - December: Use variables `x4` and `y4`
+
+Complete the following tasks: 
+
+* Create a scatterplot and describe it
+* Calculate the mean and standard deviation for both your `x` and `y` variables
+* Calculate the correlation coefficient
+* Compare the information you have obtained with your neighbor
+
+```{r}
+## SPACE FOR YOUR WORK ##
+
+
+```
+
+
+#### STEP 6: Line of Best Fit
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+What is this line? 
+
+```{r}
+# Y~X
+## YOUR CODE HERE ##
+```
+
+
+
+
+
+
+
+
+
+
+
