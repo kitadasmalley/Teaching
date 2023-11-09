@@ -1,0 +1,230 @@
+---
+title: 'DATA151: Introduction to Regression Models and Subgroups'
+author: "Kitada Smalley"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+### Learning Objectives
+
+Students will learn how to use linear regression to model relationships between variables and also explore subgroups. 
+
+
+
+### Example 1: Climate Change and Fish Habitats
+
+As the climate grows warmer, we expect many animal species to move toward the poles in an attempt to maintain their preferred temperature range.
+
+Do data on fish in the North Sea confirm this suspicion?
+
+The data are 25 years of mean winter temperatures at the bottom of the North Sea (degrees Celsius) and the center of the distribution of anglerfish (sometimes called monkfish) in degrees of north latitude.
+
+#### Step 0: Tidyverse
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+#### Step 1: Load the data into R. Create a data frame.
+
+```{r}
+# EXAMPLE: Climate Change and Fish Habitats
+# Data on anglerfish distribution
+# Explanatory: Temp in C (mean winter temperature at bottom of North Sea)
+# Response: Latitude of center for distribution of anglerfish
+
+year<-c(1977:2001)
+temp<-c(6.26, 6.26, 6.27, 6.31, 6.34, 6.32, 6.37, 6.39, 6.42, 
+        6.52, 6.68, 6.76, 6.78, 6.89, 6.90, 6.93, 6.98, 
+        7.02, 7.09, 7.13, 7.15, 7.29, 7.34, 7.57, 7.65)
+lat<-c(57.20, 57.96, 57.65, 57.59, 58.01, 59.06, 56.85, 56.87, 57.43,
+       57.72, 57.83, 57.87, 57.48, 58.13, 58.52, 58.48, 57.89,
+       58.71, 58.07, 58.49, 58.28, 58.49, 58.01, 58.57, 58.90)
+
+# Make a dataframe
+fish<-data.frame(year, temp, lat)
+```
+
+#### Step 2: Look at the data! Create a scatterplot!
+
+```{r}
+library(tidyverse)
+# Scatterplot of data looks linear
+ggplot(data=fish, aes(temp, lat))+
+  geom_point()+
+  ggtitle("Scatterplot of Temp vs Fish Latitude")+
+  xlab("Temperature (C)")+
+  ylab("Fish Latitude")+
+  theme_bw()
+```
+
+Describe the relationship: 
+
+* direction – positive or negative
+* form – linear or non-linear
+* strength – strong (points close together) or weak (points spread out)
+* outliers - an individual value that falls outside the overall pattern of the relationship
+
+#### Step 3: Create a simple linear model
+
+
+```{r}
+# Fit a simple linear model 
+mod2<-lm(lat~temp)
+summary(mod2)
+names(mod2)
+```
+
+#### Step 4: Add the fitted line to the scatterplot
+
+
+```{r}
+# Scatterplot with fitted line
+ggplot(data=fish, aes(temp, lat))+
+  geom_point()+
+  ggtitle("Scatterplot of Temp vs Fish Latitude")+
+  xlab("Temperature (C)")+
+  ylab("Fish Latitude")+
+  theme_bw()+
+  geom_abline(slope=mod2$coefficients[2], intercept=mod2$coefficients[1],
+              color="blue", lty=2, lwd=1)
+```
+
+
+### Example 2: Amazon Shipping
+
+When you buy a book off Amazon, you get a quote for how much it costs to ship. This is based on the weight of the book. If you didn’t know the weight of the book, what other characteristics of it could you measure to help predict the weight?
+
+#### Step 1: Load the Data
+
+```{r}
+#install.packages("DAAG")
+library(DAAG)
+data(allbacks)
+
+books <- allbacks[, c(3, 1, 4)]
+head(books)
+```
+
+#### Step 2: Look at the data
+
+```{r}
+# Scatterplot of all books together
+ggplot(data=books, aes(x=volume, y=weight))+
+  geom_point()+
+  ggtitle("Scatterplot of Volume vs Weight of Books")+
+  theme_bw()
+```
+
+#### Step 3: Create a simple linear model
+
+```{r}
+m3<-lm(weight~volume, data=books)
+summary(m3)
+```
+
+#### Step 4: Add the fitted line to the scatterplot
+
+```{r}
+# Scatterplot of all books together and fitted model
+ggplot(data=books, aes(x=volume, y=weight))+
+  geom_point()+
+  ggtitle("Scatterplot of Volume vs Weight of Books")+
+  theme_bw()+
+  geom_abline(slope=m3$coefficients[2], intercept = m3$coefficients[1])
+```
+
+#### Step 5: Explore possible subgroups
+
+What about considering cover type in the model?
+
+```{r}
+# What about considering cover type 
+ggplot(data=books, aes(x=volume, y=weight, color=cover))+
+  geom_point()+
+  ggtitle("Scatterplot of Volume vs Weight of Books")+
+  theme_bw()
+```
+
+Would there be different equations for the models? 
+
+```{r}
+ggplot(data=books, aes(x=volume, y=weight, color=cover))+
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)+
+  ggtitle("Scatterplot of Volume vs Weight of Books")+
+  theme_bw()
+```
+
+#### Interactions?!
+
+How does this work in the model?  This is called an interaction, which means that the relationship between `x` and `y` varies depending on the levels of a variable.  
+
+It can be modeled by using the following code: 
+
+```{r}
+# Include interaction to shift intercept and change slope
+m5<-lm(weight~volume*cover, data=books)
+summary(m5)
+```
+
+If you want to learn more about this please consider taking DATA 152 and/or DATA 252.
+
+### Example 3: How do NFL fans lean politically?
+
+Based on the graphic published in: 
+https://fivethirtyeight.com/features/how-every-nfl-teams-fans-lean-politically/
+
+
+#### Step 1: Import the Data
+
+```{r}
+# Import data
+sports<-read.csv("https://raw.githubusercontent.com/kitadasmalley/FA2020_DataViz/main/data/NFL_fandom_data.csv", 
+                 header=TRUE)
+
+head(sports)
+
+```
+
+#### Step 2: Tidy the Data
+
+```{r}
+# Tidy the data
+## Use gather to create:
+### column for sport (categorical variable)
+### Column for search interest (numeric - percent)
+
+sportsT<-sports%>%
+  gather("sport", "searchInterest",-c(DMA, PctTrumpVote))
+
+```
+
+#### Step 3: Relevel
+
+```{r}
+
+# Level the sport variable so that its in the right order
+sportsT$sport<-factor(sportsT$sport, 
+                      level=c("NBA", "MLB", "NHL", "NFL", "CBB", "NASCAR", "CFB"))
+
+```
+
+#### Step 4: Graph it!
+
+```{r}
+ggplot(sportsT, aes(x=PctTrumpVote, y=searchInterest))+
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)+
+  facet_grid(.~sport)+
+  ylab("Search Interest")+
+  xlab("Trump Vote Share")
+```
+
