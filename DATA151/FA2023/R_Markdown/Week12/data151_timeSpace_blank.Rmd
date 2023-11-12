@@ -1,0 +1,272 @@
+---
+title: 'DATA151: Trends Over Time and Space'
+author: "Kitada Smalley"
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+In this lesson students will learn how to create
+
+* Time series plots 
+* Choropleths (colored map plots)
+
+### Time Series Plots 
+
+Time series plots show how a variable (on the y-axis) changes over time (on the x-axis).  
+
+#### Example 1: Salem, Oregon AQI
+
+##### Step 0: Library Tidyverse
+
+```{r warning=FALSE, message=FALSE}
+
+library(tidyverse)
+```
+
+##### Step 1: Load the Data
+
+```{r}
+salem<- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/salemOR_AQI.csv",
+                 header=TRUE)
+
+#str(salem)
+```
+
+##### Step 2: `geom_line()`
+
+Let's just try using `geom_line()`: 
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+What's wrong with this? 
+
+* The x-axis needs to be a date type variable
+
+```{r}
+## INSERT CODE HERE ##
+
+## INSERT CODE HERE ##
+```
+
+##### Step 3: Air Quality Ratings
+
+We can do a little wrangling to add a column for air quality rating, as definited here: 
+
+https://aqicn.org/data-platform/register/
+
+```{r}
+## AIR QUALITY
+## a little wrangling
+salem<-salem%>%
+  mutate(quality=as.character(lapply(pm25, function(x){
+    out=NA
+    if(is.na(x)==FALSE){
+    if(x %in% c(0:50)){
+      out="Good"
+    }
+    if(x %in% c(51:100)){
+      out="Moderate"
+    }
+    if(x %in% c(101:150)){
+      out="Unhealthy Sensitive" # Unhealthy for Sensitive Groups
+    }
+    if(x %in% c(151:200)){
+      out="Unhealthy"
+    }
+    if(x %in% c(201:300)){
+      out="Very Unhealthy"
+    }
+    if(x > 300){
+      out="Hazardous"
+    }
+    }
+    out
+  })))
+```
+
+Order the rating.
+
+```{r}
+salem$quality<-factor(salem$quality, 
+                      levels=c("Good", "Moderate", 
+                               "Unhealthy Sensitive", "Unhealthy", 
+                               "Very Unhealthy","Hazardous" ))
+
+```
+
+##### Step 4: Create a Custom Color Palette
+
+```{r}
+pal<-c("forestgreen", "gold", "darkorange", "firebrick3", "purple3", "darkred")
+
+## ADD POINTS 
+ggplot(salem, aes(date, pm25))+
+  geom_point(aes(color=quality))+
+  geom_line()+
+  scale_color_manual(values=pal)+
+  theme_minimal()
+```
+
+
+#### Example 2: Cryptocurrency
+
+##### Step 1: Load the Data
+
+These data are in three separate files: 
+
+```{r warning=FALSE, message=FALSE}
+coin_Bitcoin <- read_csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/coin_Bitcoin.csv")
+coin_Dogecoin <- read_csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/coin_Dogecoin.csv")
+coin_Ethereum <- read_csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/coin_Ethereum.csv")
+
+
+```
+
+##### Step 2: Combine the data
+
+```{r}
+## INSERT CODE HERE ##
+
+```
+
+##### Step 3: Time Series Plot
+
+Since `Date` is already a date type variable we can go ahead and plot it.  Here `color=Name` works as a grouping variable.
+
+```{r}
+#str(coinBind)
+
+## INSERT CODE HERE ##
+```
+
+
+### Choropleths (Map Plots)
+
+#### Example 3: All Trails
+
+##### Step 1: Load the Data
+
+```{r}
+npark <- read_csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/AllTrails%20data%20-%20nationalpark.csv")
+
+#str(npark)
+```
+
+##### Step 2: State Level Data
+
+Group by state to create summaries for metrics within a state. 
+```{r}
+stateNP<-npark%>%
+  group_by(state_name)%>%
+  summarise(stateTrails=## INSERT CODE HERE ##, 
+            avgPop=## INSERT CODE HERE ##), 
+            avgElev=## INSERT CODE HERE ##)
+```
+
+##### Step 3: `usmap` Package
+
+```{r}
+#install.packages("usmap")
+library(usmap)
+
+states <- usmap::us_map()
+
+head(states)
+```
+
+Let's investigate the data for Oregon. 
+
+##### Points
+```{r}
+oregon<-states%>%
+  filter(full=="Oregon")
+
+## INSERT CODE HERE ##
+```
+
+These data allow us to play "connect the dots" to draw the shape of the state of Oregon. 
+
+##### Connect the dots
+
+Oh no, what happened? 
+```{r}
+## INSERT CODE HERE ##
+```
+
+We need to tell R what order to connect the dots.
+
+* `geom_path()` connects the observations in the order in which they appear in the data. 
+
+* `geom_line()` connects them in order of the variable on the x axis.
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+##### Filling in the space
+
+We can actually think of geographies as generalized polygons!
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+
+##### Step 4: Join the Map and Data
+
+When joining the data to the map we need to have the same variable name in both.  Let's create a new column named `state_name`.
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+##### Step 5: Make a Map
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+
+#### STEP 6: Changing Color Palette
+
+Viridis is a colorblind friendly color palette that can be used to create accessible heatmaps. 
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("viridis")
+library(viridis)
+
+stateNP_Map%>%
+  ggplot(aes(x, y, group = group)) +
+  geom_polygon(aes(fill = stateTrails),color="black")+
+  theme_bw()+
+  coord_equal()+
+  ggtitle("California has the MOST trails, but...")+
+  scale_fill_viridis(option="viridis", direction = 1)
+
+stateNP_Map%>%
+  ggplot(aes(x, y, group = group)) +
+  geom_polygon(aes(fill = avgPop),color="black")+
+  theme_bw()+
+  coord_equal()+
+  ggtitle("..Oregon trails are the MOST popular")+
+  scale_fill_viridis(option="viridis", direction = 1)
+
+```
+
+### Your turn! 
+
+Create maps to show the distribution of...
+
+* Average elevation by state
+* Average trail length by state
