@@ -1,0 +1,507 @@
+---
+title: 'DATA252: K-Means'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will ...
+
+* Implement the k-means algorithm scratch
+* Visualize the model
+* Create a function 
+* Utilize the `caret` package for cross validation
+* Choose the appropriate k 
+
+## Resources: 
+
+* R Shiny for K-means Clustering: <https://shiny.rstudio.com/gallery/kmeans-example.html>
+* ISLR: <https://static1.squarespace.com/static/5ff2adbe3fe4fe33db902812/t/6062a083acbfe82c7195b27d/1617076404560/ISLR%2BSeventh%2BPrinting.pdf#page=390>
+* Machine Learning for Biostatistics <https://bookdown.org/tpinto_home/Unsupervised-learning/k-means-clustering.html>
+
+## K-Means Algorithm
+
+While there are variants on the k-means clustering algorithm, there is agreement that it is an unsupervised algorithm used to identify $k$ homogeneous groups. 
+
+We will used the following alogorithm from ISLR: 
+* Step 1: Randomly assign a number, from 1 to $K$, to each of the observations.  These serve as initial cluster assignments for the observations. 
+* Step 2: Iterate until the cluster assignments stop changing: 
+  * (A) For each $K$ clusters, computer the cluster centroid. The $k^{th}$ cluster centroid is the vector of the p feature means for the observations in the $k^{th}$ cluster. 
+    * (B) Assign each observation to the cluster whose centroid is closest (where closest is defined using Euclidian distance)
+    
+## I) Programming from Scratch 
+
+### Example Data
+
+Let's limit this example to two variables to start so that we can see how the k-means algorithm works. 
+
+```{r}
+library(tidyverse)
+data(iris)
+
+irisSP <- iris %>% 
+  select(Sepal.Length, Petal.Length)
+
+head(irisSP)
+```
+
+### Step 1: Random Assignment
+
+```{r}
+### Randomly assign
+## Number of clusters
+k<-3 
+## Sample Size
+n<-dim(irisSP)[1]
+## initialize
+iter<-0
+
+## How many times should we repeat the clusters?
+ceiling_k<-ceiling(dim(irisSP)[1]/3)
+
+## Dont forget to set a seed
+set.seed(123)
+
+## Creating a random order
+rep_k<-sample(rep(1:k, ceiling_k)[1:dim(irisSP)[1]])
+
+## Bind the random assignment to the data
+irisKM<-irisSP%>%
+  cbind(rep_k)
+
+## Initial graphic
+ggplot(irisKM, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k)))+
+  geom_point()
+
+```
+
+### Step 2A: Calculate Centroids
+
+```{r}
+### Calculate Centroids
+irisCentroid<-irisKM%>%
+  group_by(rep_k)%>%
+  summarise_all(mean) ## Find means for all variables
+
+irisCentroid
+
+### PLOT 
+ggplot()+
+    geom_point(data=irisKM, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k)), alpha=.6)+
+    geom_point(data=irisCentroid, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k)), pch=3, size=6)+
+    theme_minimal()+
+    ggtitle(paste("K-Means Clusters: k=", k, ", Step=",  iter))+
+    scale_color_discrete("Cluster")
+```
+
+### Step 2B: Closest
+
+```{r}
+### Closest
+## Create a distance matrix
+distMat<-matrix(nrow=n, ncol=k+1)
+
+for(i in 1:n){
+  for(j in 1:k){
+   thisRBIND<-irisCentroid[j,]%>%
+        select(-c(rep_k))%>%
+        rbind(irisSP[i,])
+   
+   distMat[i, j]<-dist(thisRBIND, method="euclidean")
+  }
+  
+  ## Find which centroid is the closest
+  distMat[i, k+1]<-which.min(distMat[i,])
+}
+
+## Check
+distMat[sample(1:n, 6),]
+
+```
+### Step 3: Update
+
+We want to update the labels if they differ from the previous iteration.
+
+```{r}
+### UPDATE if new
+old<-irisKM$rep_k
+new<-distMat[, k+1]
+```
+
+How many changed labels? 
+
+```{r}
+sum(old!=new)
+```
+
+We will need to repeat the algorithm until there are no label changes.
+
+```{r}
+if(sum(old!=new)>0){
+iter<-iter+1
+
+irisKM$rep_k<-distMat[, k+1]
+
+### Re-Calculate Centroids
+irisCentroid<-irisKM%>%
+  group_by(rep_k)%>%
+  summarise_all(mean) 
+}
+
+ggplot()+
+    geom_point(data=irisKM, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k)), alpha=.6)+
+    geom_point(data=irisCentroid, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k)), pch=3, size=6)+
+    theme_minimal()+
+    ggtitle(paste("K-Means Clusters: k=", k, ", Step=",  iter))+
+    scale_color_discrete("Cluster")
+```
+
+### Repeat While...
+
+We want to continue assigning to observations to clusters until there is no change. 
+
+```{r}
+## NUMBER OF CLUSTERS
+k<-3
+## SAMPLE SIZE
+n<-dim(irisSP)[1]
+
+ceiling_k<-ceiling(dim(irisSP)[1]/3)
+
+set.seed(123)
+#set.seed(252)
+rep_k<-sample(rep(1:k, ceiling_k)[1:dim(irisSP)[1]])
+
+irisKM<-irisSP%>%
+  cbind(rep_k)
+
+## FIND FIRST CENTROIDS
+irisCentroid<-irisKM%>%
+  group_by(rep_k)%>%
+  summarise_all(mean)
+
+## INITIALIZE
+stop<-0
+iter<-0
+while(stop==0){
+  irisCentroid<-irisKM%>%
+    group_by(rep_k)%>%
+    summarise_all(mean)
+  
+  if(iter==0){
+  holdKM<-irisKM%>%
+    cbind(iter=rep(0, n))
+  
+  holdCentroid<-irisCentroid%>%
+    cbind(iter=rep(0, n))
+  }
+  
+  ### Closest
+  distMat<-matrix(nrow=n, ncol=k+1)
+  for(i in 1:n){
+    for(j in 1:k){
+      thisRBIND<-irisCentroid[j,]%>%
+        select(-c(rep_k))%>%
+        rbind(irisSP[i,])
+      
+      distMat[i, j]<-dist(thisRBIND, method="euclidean")
+    }
+    distMat[i, k+1]<-which.min(distMat[i,])
+  }
+  
+  ### UPDATE if new
+  old<-irisKM$rep_k
+  new<-distMat[, k+1]
+  
+  ## SUM OF DISTANCES
+  score<-sum(distMat[,which.min(distMat[i,])])
+  
+  ## STOP IF NO UPDATES
+  if(sum(old!=new)==0){
+    stop<-1
+  }
+  
+  if(sum(old!=new)!=0){
+    iter<-iter+1
+    
+    ## UPDATES CLUSTERS
+    irisKM$rep_k<-distMat[, k+1]
+    
+    ### STORE DATA FROM INTERATIONS
+    thisKM<-irisKM%>%
+      cbind(iter=rep(iter, n))
+    
+    thisCentroid<-irisCentroid%>%
+      cbind(iter=rep(iter, n))
+    
+    holdKM<-holdKM%>%
+      rbind(thisKM)
+    
+    holdCentroid<-holdCentroid%>%
+      rbind(thisCentroid)
+
+  }
+}
+
+    ### PLOT LAST CLUSTERING
+
+ggplot()+
+    geom_point(data=irisKM, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k)), alpha=.6)+
+    geom_point(data=irisCentroid, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k)), pch=3, size=6)+
+    theme_minimal()+
+    ggtitle(paste("K-Means Clusters: k=", k, ", Step=",  iter))+
+    scale_color_discrete("Cluster")
+
+```
+
+How does this compare to the known species?
+
+```{r}
+table(iris$Species, irisKM$rep_k)
+```
+
+Questions: 
+
+* What are your observations? 
+* What can we say about "error" rates?
+
+### PLOTLY
+
+```{r warning=FALSE, message=FALSE}
+### USE PLOTLY FOR INTERACTIVITY
+library(plotly)
+
+g<-ggplot(data=holdKM, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k), frame=iter), alpha=.6)+
+  geom_point()+
+  theme_minimal()+
+  scale_color_discrete("Cluster")
+ggplotly(g)
+
+```
+
+### Write a Function
+
+```{r}
+my_kmeans<-function(this.data, this.k, seed){
+  ## NUMBER OF CLUSTERS
+k<-this.k
+
+## SAMPLE SIZE
+n<-dim(this.data)[1]
+
+ceiling_k<-ceiling(dim(this.data)[1]/3)
+
+set.seed(seed)
+
+rep_k<-sample(rep(1:k, ceiling_k)[1:dim(this.data)[1]])
+
+this.data_KM<-this.data%>%
+  cbind(rep_k)
+
+## FIND FIRST CENTROIDS
+this.data_Centroid<-this.data_KM%>%
+  group_by(rep_k)%>%
+  summarise_all(mean)
+
+## INITIALIZE
+stop<-0
+iter<-0
+  
+while(stop==0){
+    
+  this.data_Centroid<-this.data_KM%>%
+    group_by(rep_k)%>%
+    summarise_all(mean)
+  
+  if(iter==0){
+  holdKM<-this.data_KM%>%
+    cbind(iter=rep(0, n))
+  
+  holdCentroid<-this.data_Centroid%>%
+    cbind(iter=rep(0, n))
+  }
+  
+  ### Closest
+  distMat<-matrix(nrow=n, ncol=k+1)
+  for(i in 1:n){
+    for(j in 1:k){
+      thisRBIND<-this.data_Centroid[j,]%>%
+        select(-c(rep_k))%>%
+        rbind(this.data[i,])
+      
+      distMat[i, j]<-dist(thisRBIND, method="euclidean")
+    }
+    distMat[i, k+1]<-which.min(distMat[i,])
+  }
+  
+  ### UPDATE if new
+  old<-this.data_KM$rep_k
+  new<-distMat[, k+1]
+  
+  
+  ## STOP IF NO UPDATES
+  if(sum(old!=new)==0){
+    stop<-1
+  }
+  
+  if(sum(old!=new)!=0){
+    iter<-iter+1
+    
+    ## UPDATES CLUSTERS
+    this.data_KM$rep_k<-distMat[, k+1]
+    
+    ### STORE DATA FROM INTERATIONS
+    thisKM<-this.data_KM%>%
+      cbind(iter=rep(iter, n))
+    
+    thisCentroid<-this.data_Centroid%>%
+      cbind(iter=rep(iter, n))
+    
+    holdKM<-holdKM%>%
+      rbind(thisKM)
+    
+    holdCentroid<-holdCentroid%>%
+      rbind(thisCentroid)
+
+  }
+}
+
+output<-list(iterations=iter, 
+             final=this.data_KM, 
+             allKM=holdKM, 
+             allCentroids=holdCentroid)
+
+return(output)
+}
+```
+
+```{r}
+iris3<-my_kmeans(irisSP, 3, 123)
+
+iris3$iterations
+```
+
+### Try More Clusters
+
+```{r}
+iris5<-my_kmeans(irisSP, 5, 123)
+
+g<-ggplot(data=iris5$allKM, aes(x=Sepal.Length, y=Petal.Length, color=as.factor(rep_k), frame=iter), alpha=.6)+
+  geom_point()+
+  theme_minimal()+
+  scale_color_discrete("Cluster")
+ggplotly(g)
+```
+
+### Incorporating PCA
+
+If we want to incorporate all four variables (sepal length and width and petal length and width) we can use PCA to perform dimension reduction, which helps for visualization purposes. 
+
+```{r}
+irisS<- iris %>% 
+  select(-c(Species))
+
+irisPCA <- princomp(irisS)
+irisD1D2 <- irisPCA$scores %>%
+  as.data.frame() %>%
+  select(Comp.1, Comp.2)
+
+irisPCA3<-my_kmeans(irisD1D2, 3, 123)
+
+g<-ggplot(data=irisPCA3$allKM, aes(x=Comp.1, y=Comp.2, color=as.factor(rep_k), frame=iter), alpha=.6)+
+  geom_point()+
+  theme_minimal()+
+  scale_color_discrete("Cluster")
+ggplotly(g)
+
+### How does this relate to species
+table(iris$Species, irisPCA3$final$rep_k)
+```
+
+## II) Using Functions
+
+The following examples in this section are from Machine Learning for Biostatistics.
+
+### Ex 2. Breast Cancer
+
+```{r}
+bdiag<- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/bdiag.csv", stringsAsFactors = TRUE)
+
+
+```
+
+### Step 1: Select Variables
+
+```{r}
+#select a subset of the variables
+bdiag.2vars <- bdiag[,c("radius_mean", "texture_mean")]
+```
+
+### Step 2: `kmeans`
+
+```{r}
+#let's compute the 3 clusters
+km <- kmeans(bdiag.2vars, centers = 3)
+
+km
+```
+
+### Step 3: Visualize
+
+```{r}
+library(factoextra)
+fviz_cluster(km, data = bdiag.2vars, label=NA)+theme_bw()
+```
+
+### Step 4: Choose Number of Clusters
+
+We want to choose the optimal number of clusters for our data.  
+
+#### Elbow Method
+
+Look for the point of diminishing returns.
+
+```{r}
+fviz_nbclust(bdiag.2vars, kmeans, method = "wss",  k.max = 10)
+```
+
+This plot suggests 2 or 3 clusters for these data. 
+
+#### Silhouette Method
+
+We desire high average silhouette width, since this is an indication of how well each data point lies within its cluster.
+
+```{r}
+fviz_nbclust(bdiag.2vars, kmeans, method = "silhouette",  k.max = 10)
+```
+
+Two is the optimal number of clusters in this case. 
+
+#### Gap Statistic Method 
+
+We wish to compare the "total intracluster variation for different number of cluster k with their expected values under a data with no clustering (these data generated using Monte Carlo simulations). The higher the gap between the observed and expected, the better the clustering." 
+
+```{r}
+fviz_nbclust(bdiag.2vars, kmeans, method = "gap",  nboot=200, k.max = 10)
+```
+
+This suggests one cluster. 
+
+## TRY IT!
+
+* Can you implement k-means with more than two variables?  Will you need to change the code?  Try it!
+
+* Pre-process the Breast Cancer diagnosis data with PCA then fit a k-means. 
+
+* What would be the best number of clusters?

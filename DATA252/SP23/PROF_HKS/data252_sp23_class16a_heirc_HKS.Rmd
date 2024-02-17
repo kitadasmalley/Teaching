@@ -1,0 +1,112 @@
+---
+title: 'DATA252: Hierarchical clustering'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will ...
+
+* Implement the Hierarchical clustering algorithm
+* Visualize the model
+
+
+## Resources: 
+
+The following example comes from:
+
+* Machine Learning for Biostatistics <https://bookdown.org/tpinto_home/Unsupervised-learning/k-means-clustering.html>
+
+## Hierarchical clustering
+
+## Step 0: Load Data
+
+```{r}
+bdiag<- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/bdiag.csv", stringsAsFactors = TRUE)
+```
+
+## Step 1: Select
+
+```{r}
+library(tidyverse)
+bdiag.2vars <- bdiag%>%
+  select(c("radius_mean", "texture_mean"))
+
+
+```
+
+## Step 2: Distances
+
+```{r}
+#distances between the observations
+bdiag.dist <- dist(bdiag.2vars, method = "euclidean")
+      
+#### CHECK: what is dist() doing?
+
+bdiag.dist[1]  #is the dist between obs1 and obs2
+
+## [1] 7.82742
+
+bdiag.2vars[1:2, ] #obs 1 and 2
+      
+##   radius_mean texture_mean
+## 1       17.99        10.38
+## 2       20.57        17.77
+
+#Eucl distance
+sqrt((bdiag.2vars[1, 1] - bdiag.2vars[2,1 ])^2 + 
+(bdiag.2vars[1, 2] - bdiag.2vars[2,2 ])^2 )  
+```
+## Step 3: Complete Linkage
+
+```{r}
+#Dendrogram using the complete linkage method
+bdiag.ddgram <- hclust(bdiag.dist, method="complete")
+
+```
+
+## Step 4: Plot
+
+```{r}
+#Plot the dendrogram
+#the option hang = -1 will make the
+#labels appear below 0
+
+plot(bdiag.ddgram, cex=.4, hang = -1)
+```
+## Step 5: Cut
+
+```{r}
+plot(bdiag.ddgram, cex=.4, hang = -1)
+abline(a=20, b=0, lty=2)
+```
+
+## Step 6: Cluster
+
+```{r}
+plot(bdiag.ddgram, cex=.4, hang = -1)
+rect.hclust(bdiag.ddgram, k = 3, border = 2:5)
+
+group3 <- cutree(bdiag.ddgram, k = 3)  
+table(group3 )
+```
+
+## Step 7: Visualize
+
+```{r}
+library(factoextra)
+
+fviz_cluster(list(data = bdiag.2vars, cluster = group3 ))
+```
+

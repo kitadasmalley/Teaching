@@ -1,0 +1,350 @@
+---
+title: 'DATA252: Introduction to Text Analysis'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will ...
+
+* Learn how to work with unstructured text data
+* Utilize the tidytext package
+* Tockenize text
+* Remove stop words (and customize lexicon for stop words)
+* Create visualizations for text
+* Perfom basic sentiment analysis
+
+## Step 1: Load the Wine Data
+
+These data originally come from winemag.com and are hosted on Kaggle 
+
+<https://www.kaggle.com/datasets/zynicide/wine-reviews>
+
+The data we are using is a subset of these data only for wines from the United States.
+
+```{r}
+### UNITED STATES WINE
+usWine <- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/usWine.csv")
+str(usWine)
+head(usWine)
+```
+## Step 2: Oregon Wine
+
+Question of Interest: How many different types of wines are made in Oregon?
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+### OREGON WINE
+orWine<-usWine%>%
+  filter(province=="Oregon")%>%
+  count(variety)%>%
+  arrange(desc(n))
+
+dim(orWine)
+
+#head(orWine)
+```
+
+## Step 3: Most Common
+
+Question of Interest: What are the top ten wines made in Oregon?
+
+```{r}
+orTop<-orWine%>%
+  mutate(variety2=fct_reorder(variety, n))%>%
+  slice_max(n, n=10)
+
+orTop
+```
+
+Let's also turn this into a graphic!
+
+```{r}
+ggplot(orTop, aes(x=variety2, y=n))+
+  geom_col()+
+  coord_flip()
+```
+
+## Step 4: Pinot Noir vs Pinot Gris
+
+Filter for only pinor noir and pinot gris
+```{r}
+pinot<-usWine%>%
+  filter(province=="Oregon")%>%
+  filter(variety %in% c("Pinot Noir", "Pinot Gris"))
+```
+
+### Compare Points
+
+```{r}
+## Density
+ggplot(pinot, aes(x=points, fill=variety))+
+  geom_density(alpha=0.5)
+
+## Boxplot
+ggplot(pinot, aes(x=points, fill=variety))+
+  geom_boxplot()
+```
+
+### Compare Price
+
+```{r}
+### Density
+ggplot(pinot, aes(x=price, fill=variety))+
+  geom_density(alpha=0.5)
+
+### Boxplot
+ggplot(pinot, aes(x=price, fill=variety))+
+  geom_boxplot()
+```
+
+## Step 5: Tokenize 
+
+We will separate the reviews into terms.  This is known as tokenizing. 
+
+```{r warning=FALSE, message=FALSE}
+#install.packages("tidytext")
+library(tidytext)
+
+## tokenize
+tokenWine<-pinot%>%
+  unnest_tokens(word, description)
+
+### each term will add a new row
+dim(pinot)
+dim(tokenWine)
+
+### what does this look like?
+head(tokenWine)
+```
+
+## Step 6: Count Words
+
+```{r}
+### count
+countWords<-tokenWine%>%
+  count(word)%>%
+  arrange(desc(n))
+
+head(countWords)
+```
+
+What do you notice?
+
+These are common "filler words!  Let's take those out.
+
+## Step 7: Stop Words
+
+We want to remove stop words using the `stop_words` dataframe in `tidytext`.
+
+```{r}
+head(stop_words)
+```
+
+
+An `anti_join` removes rows that are in the second dataframe. 
+
+```{r}
+#### anti_join
+tidyWineWords<-pinot%>%
+  unnest_tokens(word, description)%>%
+  anti_join(stop_words)
+
+head(tidyWineWords)
+```
+
+Now we can check the counts again.
+
+```{r}
+tidyWineWords_Count<-tidyWineWords%>%
+  count(word)%>%
+  arrange(desc(n))
+
+head(tidyWineWords_Count)
+```
+
+Let's plot the top 30 words used to describe wine.
+
+```{r}
+### word counts
+tidyWineWords_Top<-tidyWineWords%>%
+  count(word)%>%
+  arrange(desc(n))%>%
+  slice_max(n, n=30)
+
+ggplot(tidyWineWords_Top, aes(x=word, y=n))+
+  geom_col()+
+  coord_flip()
+```
+In graphic best practice, we should order the bars by frequency. 
+
+```{r}
+
+tidyWineWords_Top%>%
+  mutate(word2=fct_reorder(word, n))%>%
+  ggplot(aes(x=word2, y=n))+
+  geom_col()+
+  coord_flip()
+```
+
+Do you notice any other words that you might want to take out?  Words that are not informative?
+
+## Step 8: Custom Stop Words
+
+Words like wine, pinot, vineyard, oregon, estate, and flavors were common in the reviews, but didn't really provide any more information about how a wine tastes.  Let's take those out too. 
+
+```{r}
+### custom stop
+custom_stop_words <- tribble(
+  ~word,    ~lexicon,
+  "wine", "CUSTOM",
+  "pinot",      "CUSTOM", 
+  "vineyard", "CUSTOM", 
+  "oregon", "CUSTOM",
+  "estate", "CUSTOM", 
+  "flavors", "CUSTOM" 
+)
+stop_words2 <- stop_words %>%
+  bind_rows(custom_stop_words)
+```
+
+We can count frequency again.
+
+```{r}
+### again
+tidyWineWords2<-pinot%>%
+  unnest_tokens(word, description)%>%
+  anti_join(stop_words2)
+  
+tidyWineWords_Top2<-tidyWineWords2%>%
+  count(word)%>%
+  arrange(desc(n))%>%
+  slice_max(n, n=30)
+
+
+tidyWineWords_Top2%>%
+  mutate(word2=fct_reorder(word, n))%>%
+  ggplot(aes(x=word2, y=n))+
+  geom_col()+
+  coord_flip()
+```
+
+## Step 9: Words for Pinots
+
+Grouping by variety we can compare pinot noir vs pinot gris. 
+```{r}
+### compare
+comparePinot<-tidyWineWords2%>%
+  count(word, variety)%>%
+  group_by(variety)%>%
+  slice_max(n, n=15)%>%
+  ungroup()%>%
+  mutate(word2=fct_reorder(word, n))
+  
+
+ggplot(comparePinot, aes(x=word2, y=n, fill=variety))+
+  geom_col(show.legend=FALSE)+
+  facet_wrap(~variety, scales="free")+
+  coord_flip()
+
+```
+
+## Step 10: Word Clouds
+
+Take the top 30 words and make a word cloud.
+
+```{r}
+### word cloud
+#install.packages("wordcloud")
+library(wordcloud)
+
+word_counts <- tidyWineWords2 %>%
+  count(word)
+
+wordcloud(
+  words = word_counts$word,
+  freq = word_counts$n,
+  max.words = 30
+)
+```
+
+## Step 11: Sentiment Analysis
+
+There are multiple methods for sentiment analysis within `tidytext`
+
+* `bing`: codes positive or negative
+* `afinn`: sentiment score from -5 to 5
+* `nrc`: word-emotion lexicon, such as trust, fear, negative, sadness, anger, ... 
+* `loughran`: language tone, such as constraining, litigous, negative, positive, superfluous, uncertainty
+
+Source: <https://www.tidytextmining.com/sentiment.html>
+```{r}
+#install.packages("textdata")
+#library(textdata)
+
+#get_sentiments("bing")%>%
+#  count(sentiment)
+
+#get_sentiments("afinn")%>%
+#  head()
+
+#get_sentiments("nrc")%>%
+#  count(sentiment)
+
+#get_sentiments("loughran")%>%
+#  count(sentiment)
+```
+We will apply `bing` to the wine descriptions
+
+```{r}
+###sentiment
+sentiment_review <- tidyWineWords2 %>%
+  inner_join(get_sentiments("bing"))
+
+### What sentiments are in the wine descriptions?
+sentiment_review %>%
+  count(sentiment)
+
+### what words and sentiments are used 
+sentiment_review %>%
+  count(word, sentiment) %>%
+  arrange(desc(n))%>%
+  head()
+
+```
+
+What are the top 10 words per sentiment?
+
+```{r}
+word_counts <- sentiment_review %>%
+  count(word, sentiment) %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>%
+  ungroup() %>%
+  mutate(
+    word2 = fct_reorder(word, n)
+  )
+
+ggplot(word_counts, aes(x = word2, y = n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ sentiment, scales = "free") +
+  coord_flip() +
+  labs(
+    title = "Sentiment Word Counts",
+    x = "Words"
+  )
+
+```
+

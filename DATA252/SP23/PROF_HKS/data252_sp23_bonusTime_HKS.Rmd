@@ -1,0 +1,395 @@
+---
+title: 'BONUS LESSON: Time Series'
+author: "Kitada Smalley"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+## Learning Objectives
+
+In this lesson students will learn how the basics of time series...
+
+* What is a time series?
+* Why and when should we use time series?
+* How do you decompose a time series?
+
+## Motivation
+
+Last class we saw how polynomial regression was used for model COVID-19 data in 2020; however, this model is inherently flawed because it assumes independence.  When data are taken close 
+
+## Example 1: COVID
+
+```{r}
+covid<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/complete.csv")
+
+str(covid)
+```
+
+### WRANGLE!
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(magrittr)
+
+## NEEDS TO BE A DATE OBJECT 
+covid$Date<-as.Date(covid$Date)
+
+## UNIQUE STATES
+covid<-covid%>%
+  filter(Name.of.State...UT!="Telangana***")
+
+states<-unique(covid$Name.of.State...UT)
+#states
+
+### CLEAN STATE DATA
+### the first time the state is in the data 
+### it doesn't say new cases
+### it comes up at total cases
+
+for(i in 1:length(states)){
+  thisState<-covid%>%
+    filter(Name.of.State...UT==states[i])%>%
+    arrange(-desc(Date))
+  
+  thisState$New.cases[1]<-thisState$Total.Confirmed.cases[1]
+  
+  if(i==1){
+    covidW<-thisState
+  }
+  if(i>1){
+    covidW<-covidW%>%
+      rbind(thisState)
+  }
+}
+
+## CREATE A VECTOR OF UNIQUE DATES
+dateRange<-unique(covid$Date)
+
+## INITIALIZE EMPTY VECTOR FOR CASES
+cases<-c()
+
+for(i in 1:length(dateRange)){
+  
+  ## CALCULATE NUMBER OF NEW CASES ACROSS ALL STATES
+  covidThisDate<-covid%>%
+    filter(Date==dateRange[i])%$%
+    sum(New.cases)
+  
+  cases<-c(cases, covidThisDate)
+}
+
+## Create a new data frame
+newCaseDate<-data.frame(Date=dateRange, 
+                        Daily_Cases=cases,
+                        ## CUMULATIVE SUM
+                        Total_Cases=cumsum(cases) 
+)%>%
+  mutate(Start=as.Date("2020-01-30"))%>%
+  ## NUMBER OF DAYS SINCE START 1/30/2020
+  mutate(Days=as.numeric(Date-Start))
+```
+
+### Visualize
+
+```{r}
+## Plot for New Cases in a day
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_line()+
+  ggtitle("New Cases Daily")
+
+## Plot for Total Cases
+ggplot(newCaseDate, aes(x=Days, y=Total_Cases))+
+  geom_line()+
+  geom_point()+
+  ggtitle("Total Case Over Time")
+```
+
+### Time Series
+
+#### TS Object
+First we will create a time series object and plot it.  
+```{r}
+#Converting it to Time Series Object 
+covidTS <- ts(newCaseDate$Total_Cases) 
+ts.plot(covidTS)
+```
+
+### TS from Scratch
+
+Time series are often modelled using ARIMA, which stands for auto-regressive (AR) integrated moving average (MA).  The ARIMA can be thought of as three parts: 
+
+* AR (Autoregressive): A pattern of growth/decline in the data
+* Integrated: The rate of change of the growth/decline
+* MA (Moving Average): Noise between consecutive time points
+
+An ARIMA model is typically expressed with three parameters $ARIMA(p,d,q)$.
+
+The value of $Y$ at time $t$ is considered to be a linear function of preceding time points ($t-1$, $t-2$) and also the errors from previous time points.  
+
+The model takes the form of: 
+$$Y_t=c+\phi_1 y_{d t-1}+\cdots+\phi_p y_{d t-p}+\theta_1 e_{t-1}+\cdots+\theta_q e_{t-q}+e_t$$
+where $e$ is an error term and $c$ is a constant. 
+
+The parameter of $ARIMA(p,d,q)$ are described as: 
+
+* $p$: The number of preceding ("lagged") $Y$ values in the model
+* $d$: The number of times the data is "differenced" to produce stationarity
+* $q$: The number of preceding ("lagged") error terms that are in our model
+
+
+For more information please read: 
+
+<https://ademos.people.uic.edu/Chapter23.html#2_our_example_data:_generating_sine_waves_to_play_with>
+
+#### Stationarity
+
+A common assumption in time series is that the data are stationary.  The stationary property implies that the mean, variance, and autocorrelation structure do not change over time.  
+
+In order to assess whether the process is stationary, we can perform the Augmented Dickey-Fuller Test.  
+
+```{r}
+#install.packages("tseries")
+library(tseries)
+adf.test(covidTS)
+```
+
+In the output above, there is no evidence to support the claim that these data are stationary.
+
+A common strategy to make data stationary is to performing differencing.  Differencing can stabilize a time series by removing trend. 
+
+Let's try a second order difference:
+
+```{r}
+## TAKE TWO DIFFERENCES
+covidTS2 <- diff(covidTS , differences = 2) 
+
+adf.test(covidTS2)
+
+plot(covidTS2)
+```
+
+Now, looking at the p-value,  there is evidence to suggest that these data are stationary.  
+
+#### ACF and PACF
+
+The following graphics are used to diagnose the proper parameter for the $AR(p)$ and $MA(q)$ portions. 
+
+* Auto-Correlation Function (ACF) gives us the auto correlation of any series with its lagged values.
+
+* Partial Auto-Correlation Function (PACF) gives us the amount of correlation between two variables which is not explained by their mutual correlations, but with the residuals.
+
+For more information please read: 
+
+<https://towardsdatascience.com/interpreting-acf-and-pacf-plots-for-time-series-forecasting-af0d6db4061c>
+
+
+```{r}
+#Plotting the ACF plot and PACF 
+acf(covidTS2)
+pacf(covidTS2)
+```
+Notice that the ACF plot shows significant spikes to lag 2, but the PACF is showing decay.  It is suggestive of a $MA(2)$.  
+
+### Auto ARIMA
+
+If can be very difficult to tell what $p$ and $q$ to use by looking at the ACF and PACF.  Thankfully, there is a function called `auto.arima()` that finds the best fitting time series for you. 
+
+##### Total Cases
+```{r}
+#install.packages("forecast")
+library(forecast)
+
+#Fitting auto.arima ()
+fit1 <- auto.arima(newCaseDate$Total_Cases, seasonal = FALSE) 
+fit1
+
+#Forecasting
+forecast1 <- forecast(fit1, h = 10) 
+forecast1 
+plot(forecast1)
+```
+
+
+##### Daily Cases
+
+```{r}
+#Fitting auto.arima ()
+fit2 <- auto.arima(newCaseDate$Daily_Cases, seasonal = FALSE) 
+fit2
+
+#Forecasting
+forecast2 <- forecast(fit2, h = 10) 
+forecast2 
+plot(forecast2)
+```
+
+Question: 
+
+* What do you observe happens to the errors as the forecasted time point is further from the data?
+
+
+## Example 2: Seasonal Flu
+
+The first example, was pretty simple... let's try something harder!
+
+These data come from the CDC Weekly U.S. Influenza Surveillance Report (FluView)
+
+Source: 
+
+* <https://www.cdc.gov/flu/weekly/index.htm>
+* <https://gis.cdc.gov/grasp/FluView/FluHospRates.html>
+
+```{r}
+fluAll<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/flu.csv")
+
+str(fluAll)
+```
+
+### Wrangle
+
+```{r}
+fluAll$WEEKLY.RATE<-as.numeric(fluAll$WEEKLY.RATE)
+
+flu<-fluAll%>%
+  filter(AGE.CATEGORY=="Overall", 
+         SEX.CATEGORY=="Overall", 
+         RACE.CATEGORY=="Overall")
+
+#install.packages("lubridate")
+library(lubridate)
+
+## Make a date column 
+fluDat<-flu%>%
+  mutate(date=lubridate::ymd(paste(MMWR.YEAR,"-01-01", sep="" )) + lubridate::weeks( MMWR.WEEK - 1 ))
+
+```
+
+### Visualize
+
+Make a time series plot.
+
+```{r}
+
+### MAKE A TIME SERIES PLOT
+ggplot(data=fluDat, aes(x=date, y=WEEKLY.RATE))+
+  geom_line()
+
+```
+
+### Decompose
+
+We can decompose a time series into a seasonal component, trend, and noise.  
+
+```{r}
+### OH NO MISSING DATA DURING COVID
+### and the data after looks ... suspect
+useDat<-fluDat%>%
+  filter(date<"2020-01-01")
+
+### Decompose timeseries
+flu_ts <- ts(useDat$WEEKLY.RATE, freq = 365.25/7)
+
+plot(stl(flu_ts, 365.25/7))
+
+```
+
+#### Seasonality
+
+How could we model seasonal patterns with a method we already learned?
+
+```{r}
+### Seasonal flu
+ggplot(flu, aes(x=MMWR.WEEK, y=WEEKLY.RATE, color=as.factor(MMWR.YEAR)))+
+  geom_line()
+
+### Let's add seasons
+### week of year
+lubridate::week(as.Date("2020-03-20")) # 12 (SPRING)
+lubridate::week(as.Date("2020-06-21")) #25 (SUMMER)
+lubridate::week(as.Date("2020-09-23")) #39 (FALL)
+lubridate::week(as.Date("2020-12-21")) #51 (WINTER)
+
+###
+ggplot(flu, aes(x=MMWR.WEEK, y=WEEKLY.RATE, color=as.factor(MMWR.YEAR)))+
+  geom_line()+
+  geom_vline(xintercept = 12, lty=2)+
+  geom_vline(xintercept = 25, lty=2)+
+  geom_vline(xintercept = 39, lty=2)+
+  geom_vline(xintercept = 51, lty=2)
+
+```
+
+Model seasonality with LOESS!
+
+```{r}
+## LOESS
+ggplot(flu, aes(x=MMWR.WEEK, y=WEEKLY.RATE))+
+  geom_line(aes(group=MMWR.YEAR))+
+  geom_smooth(method="loess" , se=FALSE, span=.2)
+
+### DECOMPOSE WEEK
+fluLoess<-loess(WEEKLY.RATE~MMWR.WEEK, span=0.2,
+                data=useDat)
+
+### PREDICT SEASONALITY EFFECT (by week)
+weekPred<-data.frame(MMWR.WEEK=1:52)%>%
+  mutate(weekSnl=predict(fluLoess, MMWR.WEEK))
+
+```
+
+We can do a pretty good job just continuting this seasonality.
+
+```{r}
+newdata = data.frame(MMWR.YEAR=2020)
+
+### new data frame
+predDf<-data.frame(MMWR.YEAR=rep(2020, 52), 
+                   MMWR.WEEK=1:52, 
+                   YT=2.753444)%>%
+  left_join(weekPred)%>%
+  mutate(date=lubridate::ymd(paste(MMWR.YEAR,"-01-01", sep="" )) + lubridate::weeks( MMWR.WEEK - 1 ))
+
+
+#### Plot together
+ggplot(useDat, aes(x=date, y=WEEKLY.RATE))+
+  geom_line()+
+  geom_line(data=predDf, aes(x=date, y=weekSnl), color="red")
+```
+
+
+
+### SARIMA
+
+This is for a seasonal ARIMA:
+
+```{r}
+## CHANGE TO MONTHLY
+fluMo<-useDat%>%
+  mutate(date=lubridate::ymd(paste(MMWR.YEAR,"-01-01", sep="" )) + lubridate::weeks( MMWR.WEEK - 1 ))%>%
+  mutate(MONTH=month(date))%>%
+  group_by(MMWR.YEAR, MONTH)%>%
+  summarise(MO.RATE=sum(WEEKLY.RATE))%>%
+  mutate(date=lubridate::ymd(paste(MMWR.YEAR,"-",MONTH,"-01", sep="" )))
+        
+#View(fluMo) 
+
+## SARIMA
+fluSarima<-auto.arima(ts(fluMo$MO.RATE, freq =  12))
+fluSarima
+
+
+
+```
+
+
+
+
+
+

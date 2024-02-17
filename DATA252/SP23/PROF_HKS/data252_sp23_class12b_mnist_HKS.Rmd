@@ -1,0 +1,561 @@
+---
+title: 'DATA252: Classification and Image Analysis'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+## Learning Objectives
+
+In this lesson students will ...
+
+* Learn the basics of image analysis
+* Apply machine learning algorithms to classify numeric characters
+
+  * Linear Regression
+  * K-nearest Neighbors
+  * Logistic Regression 
+  * Classification Tree
+  * Random Forest
+  * Linear Discriminant Analysis 
+  * Quadratic Discriminant Analysis
+
+* Compare model fit using confusion matrices
+
+## Data Inspiration
+
+The first step in handling mail received in the post office is sorting letters by zip code.  Originally, humans had to sort these by hand. To do this, they had to read the zip codes on each letter. Today, thanks to machine learning algorithms, a computer can read zip codes and then a robot sorts the letters.
+
+Source: <http://rafalab.dfci.harvard.edu/dsbook/introduction-to-machine-learning.html>
+
+## Example 1
+
+Let's start with a simplified case.  
+
+**Goal**: Classify 2’s vs 7’s
+
+**Group Discussion Question**: 
+
+* Task: Each group member, write down a 2 and a 7
+* Combine the data for your group.  Do you see variability?
+* How do you distinguish the difference between a 2 and a 7?
+* How might you teach a computer to do this?
+
+```{}
+USE THIS SPACE FOR YOUR NOTES
+```
+
+### Introducing the Data
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+#install.packages("dslabs")
+library(dslabs)
+
+data(mnist_27)
+
+# learn about the data
+?mnist_27
+
+# Let's make the data easier to work with
+train27<-mnist_27$train
+test27<-mnist_27$test
+str(train27)
+```
+
+#### Features Available
+
+* $X_1$: Proportion of dark pixels that are in the upper left quadrant
+* $X_2$: Proportion of dark pixels that are in the lower right quadrant
+
+**Group Discussion Question**: 
+
+* Now that you know what variables are available, how would you teach a computer how to distinguish between a 2 and a 7? 
+* Phrase a hypothesis in terms of the variables $X_1$ and $X_2$.
+
+```{}
+USE THIS SPACE FOR YOUR NOTES
+```
+
+### STEP 0: Visualize 
+
+The data are already partitioned into training and testing sets.  First, let's create tables to assess the proportion of 2's and 7's in the partitions.
+
+```{r}
+## TRAIN TABLE
+tabTrain<-table(train27$y)
+prop.table(tabTrain)
+
+## TEST TABLE
+tabTest<-table(test27$y)
+prop.table(tabTest)
+```
+Now, let's create graphics to assess the distributions of the feature values across the two categories (2 and 7).
+
+```{r}
+## DENSITY for X_1
+ggplot(train27, aes(x=x_1, fill=y))+
+  geom_density(alpha=.5)
+
+## DENSITY for X_2
+ggplot(train27, aes(x=x_2, fill=y))+
+  geom_density(alpha=.5)
+
+```
+
+Is there a bivariate relationships for $X_1$ and $X_2$ together?
+
+```{r}
+## SCATTERPLOT
+ggplot(train27, aes(x=x_1, y=x_2, color=y))+
+  geom_point()
+```
+**Question**:
+
+* What insights can be drawn from these graphics?  
+
+```{}
+USE THIS SPACE FOR YOUR NOTES
+```
+
+### Model A: Linear Regression
+
+One the simplest and most widely used modeling technique is linear regression.  While it might not be the most appropriate technique for classification, if we transform our groups into binary variables we can fit a line to separate the two groups.   
+
+#### Step 1: Binary Variables
+
+```{r}
+train27$y01<-as.numeric(train27$y)-1
+test27$y01<-as.numeric(test27$y)-1
+```
+
+#### Step 2: Fit a MLR
+
+```{r}
+lm27<-lm(y01~x_1+x_2, data=train27)
+summary(lm27)
+```
+#### Step 3: Boundary Line
+
+Consider the model:
+
+$$0.5=\hat{\beta}_0+\hat{\beta}_1 x_1+\hat{\beta}_2 x_2$$
+A probability greater than 0.5 would be results in the classification of "7".  A probability less than 0.5 would be results in the classification of "2".
+
+Then, we can fit a line  
+$$x_2=\frac{0.5-\hat{\beta}_0}{\hat{\beta}_2}-\frac{\hat{\beta}_1}{\hat{\beta}_2}x_1$$
+
+Hint: Think of $x_2$ as the response and $x_1$ as the explanatory. 
+
+```{r}
+## BETAs
+beta0<-lm27$coefficients[1]
+beta_x1<-lm27$coefficients[2]
+beta_x2<-lm27$coefficients[3]
+
+## NEW COEFFICIENTS
+new_yint<-(0.5-beta0)/beta_x2
+new_slope<- -1*(beta_x1/beta_x2)
+```
+
+Add the line to the scatterplot
+
+```{r}
+ggplot(train27, aes(x=x_1, y=x_2, color=y))+
+  geom_point()+
+  geom_abline(intercept=new_yint, 
+              slope=new_slope)
+```
+
+#### Step 4: Prediction
+
+Fit points using the new equation for the line defined above.  
+
+Then we can classify using the following rules: 
+
+* If the $X_2$ value is greater than the predicted (on the left side of the line), then classify as 7
+* If the $X_2$ value is less than the predicted (on the right side of the line), then classify as 2
+
+```{r}
+## FIT FOR PREDICTED VALUES AND CLASSIFY
+lmClass<-test27%>%
+  mutate(pred=new_yint+new_slope*x_1)%>%
+  mutate(class=as.numeric(pred>x_2))
+```
+
+#### Step 5: Model Accuracy
+
+```{r}
+## CORRECT RATE
+mean(lmClass$y01==lmClass$class)
+```
+
+Not too bad for an inappropriately applied model. 
+
+### Model B: Logistic Regression
+
+We will now try a logistic regression because that is suited for binary variables, such as this.  
+
+#### Step 1: Fit A Logistic
+
+```{r}
+log27<-glm(y~x_1*x_2, data=train27, family = "binomial")
+summary(log27)
+```
+
+**Question**:
+
+* How can we interpret these coefficients in the context of these data?  
+
+```{}
+USE THIS SPACE FOR YOUR NOTES
+```
+
+#### Step 2: Prediction
+
+```{r}
+## Predict the probability of being a 7
+log27_prop<-predict(log27, test27, type="response")
+head(log27_prop)
+```
+
+#### Step 3: Thresholding 
+
+Use 0.5 as the threshold:
+
+```{r}
+## THRESHOLD
+log27_pred<-ifelse(log27_prop>.5, "7", "2")
+```
+
+#### Step 4: Model Accuracy
+
+```{r}
+### confusion mat
+table(log27_pred, test27$y)
+
+## correct
+mean(log27_pred==test27$y)
+```
+
+### Model C: K-Nearest Neighbors
+
+How about a non-parametric method?  K-nearest neighbors will do the trick.
+
+#### Step 1: Define the Features and Outcomes
+
+```{r}
+## TRAINING 
+### FEATURE
+trainFea<-train27%>%
+  select(-c(y, y01))
+### OUTCOME
+trainOut<-train27$y
+
+## TESTING 
+### FEATURE
+testFea<-test27%>%
+  select(-c(y, y01))
+### OUTCOME
+testOut<-test27$y
+```
+
+#### Step 2: Fit a KNN (k=1)
+
+```{r}
+library(class)
+
+set.seed(123)
+
+### KNN
+knn.pred=knn(train = trainFea,
+             test = testFea,
+             cl = trainOut,
+             k=1)
+
+### CONFUSION MATRIX
+cm<-table(knn.pred,testOut)
+cm
+
+### CORRECT RATE
+mean(knn.pred==testOut)
+```
+
+#### Step 3: Find the Best k
+
+```{r}
+set.seed(123)
+error <- c()
+for (i in 1:30){
+  knnPred<- knn(train = trainFea,
+                test = testFea,
+                cl = trainOut, 
+                k = i)
+  error[i] = 1- mean(knnPred==testOut)
+}
+
+ggplot(data = data.frame(error), aes(x = 1:30, y = error)) +
+  geom_line(color = "Blue")+
+  xlab("Neighborhood Size")
+which.min(error)
+```
+#### Step 4: Fit a KNN (k=8)
+
+```{r}
+### k=8
+knn.pred8=knn(train = trainFea,
+             test = testFea,
+             cl = trainOut,
+             k=8)
+
+cm8<-table(knn.pred8,testOut)
+cm8
+
+### correct rate
+mean(knn.pred8==testOut)
+```
+That's a substantial increase! 
+
+### Model D: Classification Tree
+
+Trees are nice because they are highly interpretable and mirror human decision making. 
+
+#### Step 1: Fit a Tree
+
+```{r}
+set.seed(123)
+library(rpart)
+
+### AVOID DATA LEAKAGE
+train27<-train27%>%
+  select(-y01)
+
+test27<-test27%>%
+  select(-y01)
+
+### FIT A TREE
+classTree<- rpart(y ~ .,
+                  data = train27,
+                  method = "class")
+```
+
+#### Step 2: Plot the Tree
+
+```{r}
+### PLOT TREE
+library(rpart.plot)
+rpart.plot(classTree)
+```
+
+**Question**:
+
+* What patterns do you observe in the branching?  
+
+```{}
+USE THIS SPACE FOR YOUR NOTES
+```
+
+#### Step 3: Pruning?
+
+```{r}
+### Plot CP
+plotcp(classTree)
+
+## LOOKS LIKE THE FULL TREE IS BEST, NO NEED TO PRUNE
+```
+
+#### Step 4: Predict
+
+```{r}
+### PREDICT
+predTree1<-predict(classTree , test27, type="class")
+```
+
+#### Step 5: Model Accuracy
+
+```{r}
+### CONFUSION MATRIX
+cmTree1<-table(predTree1, test27$y)
+cmTree1
+
+## CORRECT RATE
+mean(predTree1==test27$y)
+```
+### Model E: Random Forest
+
+What's better than one tree? Many trees!
+
+#### Step 1: Fit a Random Forest
+
+```{r}
+library(caret)
+
+set.seed(123)
+caretRF <- train(y ~., 
+                 data = train27, 
+                 method = "rf",
+                 trControl = trainControl("cv", number = 10),
+                 importance = TRUE
+)
+# Best tuning parameter
+caretRF$bestTune
+caretRF$finalModel
+```
+#### Step 2: Predict 
+
+```{r}
+## PREDICT
+predCaretRF <- caretRF %>% predict(test27)
+```
+
+#### Step 3: Model Accuracy
+
+```{r}
+## TABLE
+table(predCaretRF, test27$y)
+
+## CORRECT RATE
+mean(predCaretRF==test27$y)
+```
+### Model F: Linear Discriminant
+
+Linear discriminant analysis (LDA) is a modeling technique that can be used for classification and dimension reduction.  The goal of LDA is to maximize the distance of the projected means and to minimize the projected within-class variance.  We can then take an orthogonal vector to create a decision boundary.  
+
+#### Step 1: Fit LDA
+
+```{r}
+library(MASS)
+
+# Fit the model
+lda27 <- lda(y~., data = train27)
+lda27
+```
+
+#### Step 2: Prediction
+
+```{r}
+# Make predictions
+predLDA <- lda27 %>% predict(test27)
+
+# Predicted classes
+head(predLDA $class, 6)
+# Predicted probabilities of class memebership.
+head(predLDA $posterior, 6) 
+# Linear discriminants
+head(predLDA $x, 3) 
+
+```
+#### Step 3: Model Accuracy 
+
+```{r}
+# Model accuracy
+mean(predLDA$class==test27$y)
+plot(lda27)
+```
+
+
+#### Step 4: Boundary Line
+
+```{r}
+library(klaR)
+
+partimat(y~., data = train27, method = "lda")
+```
+
+### Model G: Quadratic Discriminant 
+
+Rather than fitting a straight boundary function, we can use a quadratic. 
+
+#### Step 1: Fit a QDA
+
+```{r}
+library(MASS)
+
+# Fit the model
+qda27 <- qda(y~., data = train27)
+qda27
+```
+
+#### Step 2: Predict 
+
+```{r}
+# Make predictions
+predQDA <- qda27 %>% predict(test27)
+```
+
+#### Step 3: Model Accuracy
+
+```{r}
+# Model accuracy
+mean(predQDA$class==test27$y)
+```
+
+#### Step 4: Boundary Line
+
+```{r}
+library(klaR)
+
+partimat(y~., data = train27, method = "qda")
+```
+
+## Compare
+
+### Model A: Linear Regression
+
+```{r}
+## CORRECT RATE
+mean(lmClass$y01==lmClass$class)
+```
+
+
+### Model B: Logistic Regression
+
+```{r}
+## correct
+mean(log27_pred==test27$y)
+```
+
+
+### Model C: K-Nearest Neighbors
+
+```{r}
+### correct rate
+mean(knn.pred8==testOut)
+```
+
+
+### Model D: Classification Tree
+
+```{r}
+## CORRECT RATE
+mean(predTree1==test27$y)
+```
+
+
+### Model E: Random Forest
+
+```{r}
+## CORRECT RATE
+mean(predCaretRF==test27$y)
+```
+
+
+### Model F: Linear Discriminant
+
+```{r}
+mean(predLDA$class==test27$y)
+```
+
+
+### Model G: Quadratic Discriminant
+
+```{r}
+mean(predQDA$class==test27$y)
+```
+
