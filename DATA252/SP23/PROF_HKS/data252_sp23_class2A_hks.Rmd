@@ -1,0 +1,167 @@
+---
+title: 'DATA252: Processing Data'
+author: "Kitada Smalley"
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+Students will learn how to work with real data to prepare it to perform machine learning functions using the tidyverse. 
+
+
+### Importing Data
+
+```{r}
+### use raw file from github
+laptop_price <- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/laptop_price.csv")
+
+```
+
+### Looking at Data Structure
+
+```{r}
+## LOOK AT THE DATA
+### structure
+str(laptop_price )
+```
+
+### Tidyverse
+
+```{r}
+## TIDYVERSE
+#install.packages("tidyverse")
+library(tidyverse)
+
+```
+
+#### Mutate
+
+```{r}
+### convert to dollars
+laptop_price<-laptop_price%>%
+  mutate(Price_dollar=Price_euros*1.09)
+```
+
+#### Summary Statistics
+
+```{r}
+### summary stats
+mean(laptop_price$Price_dollar)
+sd(laptop_price$Price_dollar)
+median(laptop_price$Price_dollar)
+```
+
+#### Graphics
+
+```{r}
+### plot in base
+hist(laptop_price$Price_dollar)
+
+### plot in ggplot
+ggplot(data=laptop_price, aes(x=Price_dollar))+
+  geom_histogram()
+
+ggplot(data=laptop_price, aes(x=Price_dollar))+
+  geom_boxplot()
+
+ggplot(data=laptop_price, aes(y=Price_euros, x=Inches))+
+  geom_jitter()
+
+ggplot(data=laptop_price, 
+       aes(y=Price_euros, x=Inches, color=OpSys))+
+  geom_jitter()
+```
+
+#### Stringr
+
+```{r}
+# TAKE OFF LABELS for RAM
+unique(laptop_price$Ram)
+
+#str_remove()
+laptop_price$Ram_GB<-str_remove(laptop_price$Ram, "GB")
+laptop_price$Ram_GB<-as.numeric(laptop_price$Ram_GB)
+unique(laptop_price$Ram_GB)
+
+# TAKE OFF LABELS for Weight
+unique(laptop_price$Weight)
+laptop_price$Weight_kg<-str_remove(laptop_price$Weight, "kg")
+laptop_price$Weight_kg<-as.numeric(laptop_price$Weight_kg)
+unique(laptop_price$Weight_kg)
+
+```
+
+#### New Graphics
+
+```{r}
+ggplot(data=laptop_price, 
+       aes(y=Price_euros, x=Weight))+
+  geom_point()
+
+
+ggplot(data=laptop_price, 
+       aes(y=Price_euros, x=Ram_GB))+
+  geom_point()
+```
+
+#### Filter
+
+```{r}
+apple<-laptop_price%>%
+  filter(Company=="Apple")
+
+ggplot(data=apple, aes(y=Price_euros, x=Inches, color=Product))+
+  geom_jitter()
+
+```
+
+#### CHALLENGE: Separate
+
+```{r}
+### separate
+laptop_price2<-laptop_price%>%
+  separate(Memory,c("MemAmt","MemType"), sep=" ")
+
+mem<-unique(laptop_price2$MemAmt)
+amount<-substr(mem, 1, nchar(mem)-2)
+unit<-substr(mem, nchar(mem)-1, nchar(mem))
+
+## MAKE A DATA FRAME
+memDF<-data.frame(MemAmt=mem, 
+                  Amount=as.numeric(amount), 
+                  Units=unit)
+
+
+```
+
+#### CHALLENGE: Join
+
+```{r}
+## units
+unitDF<-data.frame(Units=c("TB", "GB"), 
+                   GBs=c(1000, 1))
+
+memGB<-memDF%>%
+  left_join(unitDF)
+
+memGB
+
+convertGB<-memGB%>%
+  mutate(MemGB=Amount*GBs)
+
+convertGB
+
+laptop_price_USE<-laptop_price2%>%
+  left_join(convertGB)
+
+str(laptop_price_USE)
+```
+
