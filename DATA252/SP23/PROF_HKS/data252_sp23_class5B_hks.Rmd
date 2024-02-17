@@ -1,0 +1,394 @@
+---
+title: 'DATA252: Variable Selection and Regularization'
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+## Learning Objectives
+
+In this lesson students will learn how to implement...
+
+* Best Subset Selection
+* Stepwise Selection (Backward and Forward)
+* Ridge Regression
+* LASSO Regression
+
+### Ex 1: Health and Biostatistics
+
+Use the following data for these examples: 
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+#install.packages("faraway")
+library(faraway)
+set.seed(1212)
+
+data("fat")
+help(fat)
+```
+
+Read about the `fat` dataset
+
+```{r}
+help(fat)
+```
+
+Our goal is to predict percent of body fat from Brozek's equation. 
+
+#### Visualize 
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("GGally")
+library(GGally)
+
+ggpairs(fat, columns=c("brozek", "age", "weight", "height",
+                       "adipos", "neck", "chest", "abdom", 
+                       "hip", "thigh", "knee", "ankle", "biceps", 
+                       "forearm", "wrist"))
+```
+
+## Stepwise Selection
+
+In stepwise selection you take steps to add variables into the model or take them out of the model one at a time. 
+
+
+### Forward Selection
+
+```{r}
+#install.packages("leaps")
+library(leaps)
+
+### forward
+model.fwrd <- regsubsets(brozek ~ age + weight + 
+                           height + adipos +
+                           neck + chest + 
+                           abdom + hip + thigh +
+                           knee + ankle + 
+                           biceps + forearm + 
+                           wrist,
+                         data = fat, 
+                         nvmax = 14, 
+                         method = "forward")
+summary(model.fwrd)
+```
+
+#### Final Model
+
+```{r}
+which.min(summary(model.fwrd)$cp)
+coef(model.fwrd, id=8)
+```
+
+### Backward Selection
+
+```{r}
+model.bwrd <- regsubsets(brozek ~ age + weight + 
+                           height + adipos +
+                           neck + chest + 
+                           abdom + hip + thigh +
+                           knee + ankle + 
+                           biceps + forearm + 
+                           wrist,
+                         data = fat, 
+                         nvmax = 14, 
+                         method = "backward")
+summary(model.bwrd)
+```
+#### Final Model
+
+```{r}
+which.min(summary(model.bwrd)$cp)
+coef(model.bwrd, id=8)
+```
+
+### Best Subset Selection
+
+There are $2^p$ possible models to explore.  Best Subset Selection finds the best set of variables for a model of a given size. 
+
+```{r}
+### BEST SUBSET
+
+bestsub.model <- regsubsets(brozek ~ age + 
+                              weight + height + 
+                              adipos + 
+                              neck + chest + 
+                              abdom + hip + 
+                              thigh + knee + 
+                              ankle +biceps + 
+                              forearm + wrist, 
+                            data = fat, nvmax = 14)
+
+# nvmax: max size of subsets
+
+summary(bestsub.model)
+
+```
+#### Model Metrics
+
+```{r}
+#Performance measures
+best14<-data.frame(nvars=1:14,
+  Cp     = summary(bestsub.model)$cp,
+  r2     = summary(bestsub.model)$rsq,
+  Adj_r2 = summary(bestsub.model)$adjr2,
+  BIC    =summary(bestsub.model)$bic)%>%
+  gather(metric, value, -c(nvars))
+
+ggplot(best14, aes(x=nvars, y=value, color=metric))+
+  geom_line()+
+  facet_grid(metric~., scales = "free")
+
+which.max(summary(bestsub.model)$adjr2)
+which.min(summary(bestsub.model)$bic)
+which.min(summary(bestsub.model)$cp)
+which.max(summary(bestsub.model)$rsq)
+
+```
+
+#### Cross-Validation
+
+```{r}
+##jack-knife validation (leave-one-out)
+
+##Function to get predictions from the regsubset function 
+predict.regsubsets <- function(object, newdata, id,...){
+  form  <- as.formula(object$call[[2]])
+  mat   <- model.matrix(form, newdata)
+  coefi <- coef(object, id=id)
+  mat[, names(coefi)]%*%coefi
+}
+
+#store the prediction error n=252
+jk.errors <- matrix(NA, 252, 14) 
+
+for (k in 1:252){
+  #uses regsubsets in the data with 1 observation removed 
+  best.model.cv <- regsubsets(brozek ~ age + 
+                                weight + height + 
+                                adipos + neck + chest + 
+                                abdom + hip + thigh +
+                                knee + ankle + biceps + 
+                                forearm + wrist, 
+                              data = fat[-k,],          #removes the kth obsv
+                              nvmax = 14) 
+  
+  #Models with 1, 2 ,...14 predictors
+  for (i in 1:14){
+    #that was left out
+    pred <- predict.regsubsets(best.model.cv,                 #prediction in the obsv 
+                    fat[k,], 
+                    id=i)
+    jk.errors[k,i] <- (fat$brozek[k]-pred)^2       #error in the obsv 
+  }
+}
+
+mse.models <- apply(jk.errors, 2, mean)            #MSE estimation 
+plot(mse.models ,                              #Plot with MSEs
+     pch=19, type="b",
+     xlab="nr predictors",
+     ylab="MSE")
+```
+
+#### Final Model
+
+The best final model has 7 variables.
+
+```{r}
+coef(bestsub.model, id=7)
+```
+
+#### Questions
+
+* How would this final model change if you used a different model metric?
+
+### Potential Problems
+
+Collinearity/Multicollinaearity:  The situation in which two or more predictor variables are related to each other.  
+
+Why is this a problem? 
+
+* Increased variance (increased standard error)
+* Decreased t-statistics
+* Increased p-value
+
+
+A way to quantify the impact of multicollinearity is to look at the VIF (variance inflation factor). A VIF close to 1 would imply no correlation. The larger the VIF the larger the amount of multicollinearity.
+
+$$VIF(\hat{\beta}_j)=\frac{1}{1-R^2_{X_j|X_{-j}}}$$
+
+The general rule of thumb is that VIFs exceeding 4 warrant further investigation, while VIFs exceeding 10 are signs of serious multicollinearity requiring correction.
+
+```{r warning=FALSE, message=FALSE}
+library(car)
+vif(lm(brozek ~  age + weight +                 #OLS 
+                       height + adipos +
+                       neck + chest + 
+                       abdom + hip + thigh +
+                       knee + ankle + 
+                       biceps + forearm + 
+                       wrist, data=fat))
+```
+#### Question: 
+
+* Are there variables that we should be concerned about exhibiting multicollinearity?
+
+## Regularization Methods
+
+Regularization methods modify the loss function (see below).  One of the benefits of using regularization methods is that they protect against multicollinearity.   
+
+### Ridge Regression
+
+Ridge regression minimizes the residual sum of squares with an $L2$ penalty.
+
+$$\sum_{i=1}^n(y_i-\beta_0-\sum_{j=1}^p\beta_jx_{ij})^2+\lambda\sum_{j=1}^p\beta_j^2$$
+
+Big Ideas: 
+
+* This shrinks $\beta_j$ coefficients toward zero
+* Stills works with multicollinarity
+
+```{r}
+### ridge
+#install.packages(c("glmnet", "faraway"))
+library(glmnet)   #function for ridge regression
+library(faraway) #has the dataset fat
+set.seed(1233)
+
+#RIDGE REGRESSION
+
+#we need to define the model equation
+X <- model.matrix(brozek ~  age + weight + 
+                    height + adipos +
+                    neck + chest + 
+                    abdom + hip + thigh +
+                    knee + ankle + 
+                    biceps + forearm + 
+                    wrist, data=fat)[,-1]
+#and the outcome
+Y <- fat[,"brozek"] 
+
+#Penalty type (alpha=0 is ridge)
+cv.lambda <- cv.glmnet(x=X, y=Y, 
+                       alpha = 0,
+                       lambda=exp(seq(-5,8,.1)))  
+
+plot(cv.lambda)                                 #MSE for several lambdas
+cv.lambda$lambda.min 
+
+#ridge path
+plot(cv.lambda$glmnet.fit, 
+     "lambda", label=FALSE)
+
+```
+
+When lambda is high, the coefficients shrink toward zero.
+
+#### Final Model
+
+```{r}
+lmin        <- cv.lambda$lambda.min
+ridge.model <- glmnet(x=X, y=Y,
+                      alpha = 0, 
+                      lambda = lmin)
+ridge.model$beta
+```
+
+#### Compare to OLS
+
+```{r}
+ols.regression <- lm(brozek ~  age + weight +                 #OLS 
+                       height + adipos +
+                       neck + chest + 
+                       abdom + hip + thigh +
+                       knee + ankle + 
+                       biceps + forearm + 
+                       wrist, data=fat)
+#OLS vs RIDGE
+round(cbind(OLS = coef(ols.regression), 
+            ridge = c(ridge.model$a0,                              #intercept for
+                      as.vector(ridge.model$beta))),4)
+```
+
+### LASSO Regression
+
+Ridge regression minimizes the residual sum of squares with an $L1$ penalty.
+
+$$\sum_{i=1}^n(y_i-\beta_0-\sum_{j=1}^p\beta_jx_{ij})^2+\lambda\sum_{j=1}^p|\beta_j|$$
+
+Big Ideas: 
+
+* $\beta_j$ become zero
+* Works like variable selection
+
+```{r}
+#Penalty type (alpha=1 is lasso 
+#and alpha=0 is the ridge)
+cv.lambda.lasso <- cv.glmnet(x=X, y=Y, 
+                             alpha = 1) 
+plot(cv.lambda.lasso)                        #MSE for several lambdas
+cv.lambda.lasso    
+#Lasso path
+plot(cv.lambda.lasso$glmnet.fit, 
+     "lambda", label=FALSE)
+```
+
+#### Final Model
+
+```{r}
+l.lasso.min <- cv.lambda.lasso$lambda.min
+l.lasso.min
+lasso.model <- glmnet(x=X, y=Y,
+                      alpha  = 1, 
+                      lambda = l.lasso.min)
+lasso.model$beta 
+```
+
+### Ex 2: Birth Weights
+
+In 2015, 20.5 million newborns, an estimated 14.6 per cent of all babies born globally that year, suffered from low birthweight. 
+
+Source: UNICEF
+
+<https://data.unicef.org/topic/nutrition/low-birthweight/>
+
+```{r}
+lowbw<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/lowbwt.csv")
+
+str(lowbw)
+```
+
+Variables: 
+
+* `id`= Identification Code
+* `low`= Low Birth Weight Baby (1=Yes under 2500g, 0=No)
+* `age`= Mother's age in years
+* `lwt`= Weight at Last Period
+* `race`= Race (1=White, 2=Black, 3=Other)
+* `smoke` = Smoke during Pregnancy (1=Yes, 0=No)
+* `ptl`= History of Premature Labour (# of times)
+* `ht`= History of Hypertension (1=Yes, 0=No)
+* `ui` = Presence of Uterine Irritability (1=Yes, 0=No)
+* `ftv`= Visits to Doctor During 1st trimester
+* `bwt`= Baby's birth Weight in Grams
+
+#### Activities 
+
+Fit a linear model to predict birth weight (variable `bwt`) using all other predictors except for `low` and `id`. 
+
+* Create a graphic
+* Perform stepwise regression to find the best variables to include in the model
+* Perform Ridge and LASSO regression
+* Compare the models
+
+
+Source Examples from: 
+
+<https://bookdown.org/tpinto_home/Regularisation/lasso-regression.html>

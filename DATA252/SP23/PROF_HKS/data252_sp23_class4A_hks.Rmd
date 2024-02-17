@@ -1,0 +1,701 @@
+---
+title: 'DATA252: Moving Beyond Linearity'
+author: "Kitada Smalley"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+## Learning Objectives
+
+In this lesson students will learn how to...
+
+* Fit non-linear models (polynomial, gam, and loess)
+* Choose the appropriate amount of curvature using p-values
+* Choose hyper parameters via testing and training
+
+## 0. Import the Data
+
+During the COVID-19 Pandemic several researchers published work on estimating/forecasting the number of cases.  Due to the non-linear nature of these data many of the researchers chose to fit polynomial regression models. 
+
+Read more here: 
+
+* Revisiting the standard for modeling the spread of infectious diseases <https://www.nature.com/articles/s41598-022-10185-0>
+* On Modeling of COVID-19 for the Indian Subcontinent using Polynomial and Supervised Learning Regression <https://www.medrxiv.org/content/10.1101/2020.10.14.20212563v1.full>
+* Regression Polynomial Analysis of the COVID-19 Epidemics: An Alternative Infection Modeling <https://europepmc.org/article/ppr/ppr244391>
+* COVID-19 Epidemic Analysis Using Linear and Polynomial Regression Approach <https://link.springer.com/chapter/10.1007/978-981-15-7317-0_13>
+
+
+### Example 1: Covid-19 in India
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+covid<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/complete.csv")
+str(covid)
+```
+
+This data is pretty raw.  There are daily counts for COVID cases for each state in India (exhibiting affected residents) from 1/30/2020 and 8/30/2020.
+
+We are going to need to wrangle it: 
+
+```{r warning=FALSE, message=FALSE}
+library(magrittr)
+
+## NEEDS TO BE A DATE OBJECT 
+covid$Date<-as.Date(covid$Date)
+
+## CREATE A VECTOR OF UNIQUE DATES
+dateRange<-unique(covid$Date)
+
+## INITIALIZE EMPTY VECTOR FOR CASES
+cases<-c()
+
+for(i in 1:length(dateRange)){
+
+## CALCULATE NUMBER OF NEW CASES ACROSS ALL STATES
+covidThisDate<-covid%>%
+  filter(Date==dateRange[i])%$%
+  sum(New.cases)+1
+
+cases<-c(cases, covidThisDate)
+}
+
+## Create a new data frame
+newCaseDate<-data.frame(Date=dateRange, 
+                        Daily_Cases=cases,
+                        ## CUMULATIVE SUM
+                        Total_Cases=cumsum(cases) 
+                        )%>%
+  mutate(Start=as.Date("2020-01-30"))%>%
+  ## NUMBER OF DAYS SINCE START 1/30/2020
+  mutate(Days=as.numeric(Date-Start))
+
+
+## Plot for Total Cases
+ggplot(newCaseDate, aes(x=Days, y=Total_Cases))+
+  geom_point()+
+  ggtitle("Total Case Over Time")
+
+## Plot for New Cases in a day
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  ggtitle("New Cases Daily")
+```
+
+#### Question: 
+
+* What it be appropriate to fit a linear model to these data?  Why or why not? 
+
+## 1. Polynomial Regression 
+
+Polynomial regression is used to fit a curved relationship between the feature $X$ and the outcome $Y$.  
+
+$$Y=\beta_0+\beta_1 X+\beta_2 X^2+\beta_3 X^3+\cdot+\beta_p X^p+\varepsilon$$
+
+Polynomial regression has been applied in: 
+
+* Rate of growth of tissues.
+* Progression of the epidemics related to disease.
+* Distribution phenomenon of the isotopes of carbon 
+
+
+### How many polynomial terms should we add?
+
+```{r}
+## DEGREE 1: Linear Model
+model_1 <- lm(Daily_Cases ~ poly(Days,1), data = newCaseDate)
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=model_1$fitted.values), color="red", size=1)+
+  ggtitle("Degree 1")
+
+## Degree 2: Quadratic
+model_2 <- lm(Daily_Cases ~ poly(Days,2), data = newCaseDate)
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=model_2$fitted.values), color="red", size=1)+
+  ggtitle("Degree 2")
+
+## Degree 3: Cubic
+model_3 <- lm(Daily_Cases ~ poly(Days,3), data = newCaseDate)
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=model_3$fitted.values), color="red", size=1)+
+  ggtitle("Degree 3")
+
+## Degree 5
+model_5 <- lm(Daily_Cases ~ poly(Days,5), data = newCaseDate)
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=model_5$fitted.values), color="red", size=1)+
+  ggtitle("Degree 5")
+
+## Degree 10
+model_10 <- lm(Daily_Cases ~ poly(Days,10), data = newCaseDate)
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=model_10$fitted.values), color="red", size=1)+
+  ggtitle("Degree 10")
+
+## Degree 25
+model_25 <- lm(Daily_Cases ~ poly(Days,25), data = newCaseDate)
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=model_25$fitted.values), color="red", size=1)+
+  ggtitle("Degree 25")
+```
+
+
+### What Would A Statistician Do? 
+
+Look for significant variables. 
+
+```{r}
+model <- lm(Daily_Cases ~ poly(Days,6), data = newCaseDate)
+
+summary(model)
+```
+
+#### Question: 
+
+* Which is the last polynomial term that is significant at an $\alpha=0.05$ level?
+
+### Only Significant Terms!
+```{r}
+final.model <- lm(Daily_Cases ~ poly(Days,3), data = newCaseDate)
+
+summary(final.model)
+```
+
+#### Question: 
+
+* What the model using the coefficients estimated in R.
+
+### What Would Be Done in the Machine Learning Paradigm?
+
+Training and Testing!
+
+We should split the data into the training set to build/train a model and then predict values using the testing set.  Since we actually know the true observations we can asses how much error there was.  In reality, we aren't about to know how much error there was in predictions until the event we were trying to forecast for is in the past. 
+
+```{r}
+trainInd<-sample(1:186, 130)
+trainDat<-newCaseDate[trainInd, ]
+testDat<-newCaseDate[-trainInd, ]
+```
+
+#### Grid Search
+
+In order to find the amount of curvature we would like in the model, we will perform a grid search.  This means we will fit our model with the training set and a given amount of curvature (degree of polynomial).  We then use this model to predicting the testing set and assess the resulting error.  This process is repeated over and over until we have moved through the whole grid. 
+
+```{r}
+# setup
+RMSE <- data.frame('kth.order' = NA, 'RMSE' = NA, 'TestRMSE'=NA) # empty data frame to store RMSE
+vals <- list('Days' <- seq(min(newCaseDate$Days), max(newCaseDate$Days), by = 0.01)) # set up vector used for prediction
+
+## THIS IS CALLED A GRID SEARCH
+#k-th order
+k <- 1:8
+
+# run  loop
+for (i in 1:length(k)){
+  # build models
+  model <- lm(Daily_Cases ~ poly(Days,k[i]), data = trainDat)
+  
+  # calculate RSME and store it for further usage
+  RMSE[i,1] <- k[i] # store k-th order
+  RMSE[i,2] <- sqrt(sum((fitted(model)-trainDat$Daily_Cases)^2)/length(trainDat$Daily_Cases)) # calculate RSME
+  
+  predTest<-predict(model, testDat)
+  
+  RMSE[i, 3]<-sqrt(sum((predTest-testDat$Daily_Cases)^2)/length(testDat$Daily_Cases)) # calculate RSME
+
+}
+
+## USE GATHER TO CREATE A NEW COL TO DIFFERENTIATE THE TYPE OF RMSE
+RMSE%>%
+  gather(key="Type", value="thisRMSE", -c(kth.order))%>%
+  ggplot(aes(x=kth.order, y=thisRMSE, color=Type))+
+  geom_line()
+```
+
+## 2. Cross-Validation 
+
+### Example 2: Synthetic Data
+
+Generate Synthetic Data
+```{r}
+#### CITATION: https://www.geo.fu-berlin.de/en/v/soga/Basics-of-statistics/Linear-Regression/Polynomial-Regression/Polynomial-Regression---An-example/index.html
+##### Data generating function #####
+set.seed(400) # set seed for reproducibility
+n <- 150
+x <- runif(n, 0, 1)
+y <- sin(2*pi*x) + rnorm(n, 0, 0.35)
+poly.data <- data.frame('x' = x, 'y' = y)
+
+library(tidyverse)
+
+ggplot(poly.data , aes(x, y))+
+  geom_point()
+```
+
+### k-fold CV
+
+In k-fold Cross Validation, rather than 
+
+It is common to use $k=5$ folds
+```{r}
+### HOLD MANY FOLDS
+kf<-5
+
+### RANDOM SPLIT INTO K FOLDS
+### RANDOM INDEXES
+ind<-sample(1:150)
+
+### CREATE DF
+folds<-data.frame(ind, 
+                  fold=rep(1:kf, 150/kf))
+
+### ADD ON COLUMNS TO ORIGINAL DAT
+foldPoly<-poly.data[ind,]%>%
+  cbind(folds)
+
+### INITIALIZE RMSE DATAFRAME TO HOLD OUTPUT
+RMSE <- data.frame('fold' = NA, 'kth.order' = NA, 'RMSE' = NA, 'TestRMSE'=NA) # empty data frame to store RMSE
+
+### LOOP FOR CROSS-VALIDATION
+for(i in 1:kf){
+  trainDat<-foldPoly%>%
+    filter(fold!=i)
+  
+  testDat<-foldPoly%>%
+    filter(fold==i)
+  
+  ### INNER LOOP FOR POLY DEGREE
+  k <- 1:15 #k-th order
+  
+  for (j in 1:length(k)){
+    row<-length(k)*(i-1)+j
+    
+    # build models
+    model <- lm(y ~ poly(x,k[j]), data = trainDat)
+    
+    # calculate RSME and store it for further usage
+    RMSE[row,1] <-i
+    RMSE[row,2] <- k[j] # store k-th order
+    RMSE[row,3] <- sqrt(sum((fitted(model)-trainDat$y)^2)/length(trainDat$y)) # calculate RSME
+    
+    predTest<-predict(model, testDat)
+    
+    RMSE[row, 4]<-sqrt(sum((predTest-testDat$y)^2)/length(testDat$y)) # calculate RSME
+    
+  }
+}
+
+
+ggplot(RMSE, aes(x=kth.order, y=RMSE, color=as.factor(fold)))+
+  geom_line()+
+  geom_point()+
+  ggtitle("Training RMSE")
+
+ggplot(RMSE, aes(x=kth.order, y=TestRMSE, color=as.factor(fold)))+
+  geom_line()+
+  geom_point()+
+  ggtitle("Testing RMSE")
+
+### TIDY GRAPHICS TO PLOT TOGETHER
+tidyRMSE<-RMSE%>%
+  gather(key="Type", value="thisRMSE", -c(fold, kth.order))
+
+ggplot(tidyRMSE, aes(x=as.factor(kth.order), y=thisRMSE, fill=Type))+
+  geom_boxplot()+
+  ylim(c(.25, .6))+
+  ggtitle("Observe the Bias-Variance Trade-off")
+
+ggplot(tidyRMSE, aes(x=kth.order, y=thisRMSE, 
+                     color=Type, lty=as.factor(fold)))+
+  geom_line()+
+  ylim(c(.25, .6))
+
+```
+
+### Aggregate the folds
+
+```{r}
+### AGGREGATE CROSS_VALIDATION
+cvRMSE<-RMSE%>%
+  group_by(kth.order)%>%
+  summarise(avgTrainMSE=mean(RMSE), 
+            avgTestMSE=mean(TestRMSE), 
+            sdTrain=sd(RMSE), 
+            sdTest=sd(TestRMSE))
+
+cvRMSE
+
+cvRMSE%>%
+  gather(key="Type", value=thisRMSE, -c(kth.order))%>%
+  filter(Type %in% c("avgTrainMSE", "avgTestMSE"))%>%
+  ggplot(aes(x=kth.order, y=thisRMSE, color=Type))+
+  geom_line()+
+  geom_point()
+
+### WHICH MINIMIZES
+which.min(cvRMSE$avgTestMSE)
+cvRMSE$avgTestMSE[which.min(cvRMSE$avgTestMSE)]
+
+```
+
+#### QUESTION: 
+
+* Repeat with 10 folds.  What observations do you make?
+
+```{r}
+## THIS SPACE IS FOR YOUR CODE ##
+```
+
+## 2. GAM
+
+Generalized additive models provide a flexible modeling technique that can account for non-linear relationships.  This type of modeling falls under the generalized linear model framework and linked with smoothing (spline) functions. The big idea is that sections of the data (separated by knots) can be split up and modeled using a non-linear method.  These sections and then combined and smoothed. 
+
+### Ex 1: COVID-19
+
+The `s()` function tells are to automatically find the "best" knots for the smoothing spline. 
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("mgcv")
+library(mgcv)
+
+mod_gam<-gam(Daily_Cases ~ s(Days), data = newCaseDate)
+summary(mod_gam)
+```
+
+Looking at the output you will see `edf` which stands for effective degrees of freedom.  We can think of this as "the more wiggly the line is, the higher this number should be".  An `edf` of one would mean that the linear is linear. P-values from this table should be considered approximate. 
+
+Now, let's make a graph to compare the GAM model with the polynomial model.
+
+```{r}
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=mod_gam$fitted.values), color="red", size=1)+
+  geom_line(aes(y=model_3$fitted.values), color="blue", size=1)+
+  ggtitle("GAM Model (Red) vs Poly 3 (Blue)")
+```
+
+### Ex 2: Synthetic Data
+
+```{r}
+mod_gam2<-gam(y ~ s(x), data = poly.data)
+
+ggplot(poly.data, aes(x=x, y=y))+
+  geom_point()+
+  geom_line(aes(y=mod_gam2$fitted.values), color="red", size=1)
+
+```
+
+## 3. LOESS 
+
+LOESS (locally estimated scatterplot smoothing) is a smoothing technique that uses data points close to the value in question to create a model.  When using LOESS we must specify how much data around a given point to use.  This is known as the span. 
+
+### Ex 1: COVID-19
+
+```{r}
+loess1<-loess(Daily_Cases ~ Days, data = newCaseDate)
+
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=predict(loess1)), color="red", size=1)
+```
+
+
+In the following code, we perform a grid search for the span to decide the appropriate amount of "wiggle" to give to the line.  
+
+Let's do k-fold cross-validation to find the "best" span
+```{r}
+set.seed(123)
+
+### HOLD MANY FOLDS
+kf<-5
+
+### RANDOM SPLIT INTO K FOLDS
+### RANDOM INDEXES
+ind<-sample(1:186)
+
+### CREATE DF
+folds<-data.frame(ind, 
+                  fold=c(rep(1, 37), rep(2, 37), 
+                  rep(3, 37), rep(4, 37), rep(5, 38)))
+
+### ADD ON COLUMNS TO ORIGINAL DAT
+foldPoly<-newCaseDate[ind,]%>%
+  cbind(folds)
+
+### INITIALIZE RMSE DATAFRAME TO HOLD OUTPUT
+RMSE <- data.frame('fold' = NA, 'span' = NA, 'RMSE' = NA, 'TestRMSE'=NA) # empty data frame to store RMSE
+
+### LOOP FOR CROSS-VALIDATION
+for(i in 1:kf){
+  trainDat<-foldPoly%>%
+    filter(fold!=i)
+  
+  testDat<-foldPoly%>%
+    filter(fold==i)
+  
+#span
+sp <- seq(0.1, 1, by=.1)
+  
+  for (j in 1:length(sp)){
+    row<-length(sp)*(i-1)+j
+    
+    # build models
+    model <- loess(Daily_Cases ~ Days, data = trainDat, 
+                 span=sp[j])
+    
+    # calculate RSME and store it for further usage
+    RMSE[row,1] <-i
+    RMSE[row,2] <- sp[j] 
+    RMSE[row,3] <- sqrt(sum((predict(model)-trainDat$Daily_Cases)^2)/length(trainDat$Daily_Cases)) # calculate RSME
+    
+   predTest<-predict(model, testDat)
+  
+  err<-predTest-testDat$Daily_Cases
+  
+  RMSE[row, 4]<-sqrt(sum(err^2, na.rm=TRUE)/(length(testDat$Daily_Cases)-sum(is.na(err))))
+    
+  }
+}
+
+
+ggplot(RMSE, aes(x=span, y=RMSE, color=as.factor(fold)))+
+  geom_line()+
+  geom_point()+
+  ggtitle("Training RMSE")
+
+ggplot(RMSE, aes(x=span, y=TestRMSE, color=as.factor(fold)))+
+  geom_line()+
+  geom_point()+
+  ggtitle("Testing RMSE")
+
+### TIDY GRAPHICS TO PLOT TOGETHER
+tidyRMSE<-RMSE%>%
+  gather(key="Type", value="thisRMSE", -c(fold, span))
+
+
+ggplot(tidyRMSE, aes(x=span, y=thisRMSE, 
+                     color=Type, lty=as.factor(fold)))+
+  geom_line()
+
+### AGGREGATE CROSS_VALIDATION
+cvRMSE<-RMSE%>%
+  group_by(span)%>%
+  summarise(avgTrainMSE=mean(RMSE), 
+            avgTestMSE=mean(TestRMSE), 
+            sdTrain=sd(RMSE), 
+            sdTest=sd(TestRMSE))
+
+cvRMSE
+
+cvRMSE%>%
+  gather(key="Type", value=thisRMSE, -c(span))%>%
+  filter(Type %in% c("avgTrainMSE", "avgTestMSE"))%>%
+  ggplot(aes(x=span, y=thisRMSE, color=Type))+
+  geom_line()+
+  geom_point()
+
+### WHICH MINIMIZES
+which.min(cvRMSE$avgTestMSE)
+cvRMSE$avgTestMSE[which.min(cvRMSE$avgTestMSE)]
+
+## BEST SPAN
+bestSpan<-cvRMSE$span[which.min(cvRMSE$avgTestMSE)]
+bestSpan
+```
+Using the chosen span, we fit the LOESS model:
+
+```{r}
+loessB<-loess(Daily_Cases ~ Days, data = newCaseDate, 
+              span=bestSpan)
+
+
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=predict(loessB)), color="red", size=1)+
+  ggtitle(paste("LOESS Model with Span = ", bestSpan, sep=""))
+```
+
+### Ex 2: Synthetic
+
+Repeat with the synthetic data.
+
+```{r}
+set.seed(123)
+
+### HOLD MANY FOLDS
+kf<-5
+
+### RANDOM SPLIT INTO K FOLDS
+### RANDOM INDEXES
+ind<-sample(1:150)
+
+### CREATE DF
+folds<-data.frame(ind, 
+                  fold=rep(1:kf, 150/kf))
+
+### ADD ON COLUMNS TO ORIGINAL DAT
+foldPoly<-poly.data[ind,]%>%
+  cbind(folds)
+
+### INITIALIZE RMSE DATAFRAME TO HOLD OUTPUT
+RMSE <- data.frame('fold' = NA, 'span' = NA, 'RMSE' = NA, 'TestRMSE'=NA) # empty data frame to store RMSE
+
+### LOOP FOR CROSS-VALIDATION
+for(i in 1:kf){
+  trainDat<-foldPoly%>%
+    filter(fold!=i)
+  
+  testDat<-foldPoly%>%
+    filter(fold==i)
+  
+#span
+sp <- seq(0.1, 1, by=.1)
+  
+  for (j in 1:length(sp)){
+    row<-length(sp)*(i-1)+j
+    
+    # build models
+    model <- loess(y ~ x, data = trainDat, 
+                 span=sp[j])
+    
+    # calculate RSME and store it for further usage
+    RMSE[row,1] <-i
+    RMSE[row,2] <- sp[j] 
+    RMSE[row,3] <- sqrt(sum((predict(model)-trainDat$y)^2)/length(trainDat$y)) # calculate RSME
+    
+   predTest<-predict(model, testDat)
+  
+  err<-predTest-testDat$y
+  
+  RMSE[row, 4]<-sqrt(sum(err^2, na.rm=TRUE)/(length(testDat$y)-sum(is.na(err))))
+    
+  }
+}
+
+
+ggplot(RMSE, aes(x=span, y=RMSE, color=as.factor(fold)))+
+  geom_line()+
+  geom_point()+
+  ggtitle("Training RMSE")
+
+ggplot(RMSE, aes(x=span, y=TestRMSE, color=as.factor(fold)))+
+  geom_line()+
+  geom_point()+
+  ggtitle("Testing RMSE")
+
+### TIDY GRAPHICS TO PLOT TOGETHER
+tidyRMSE<-RMSE%>%
+  gather(key="Type", value="thisRMSE", -c(fold, span))
+
+
+ggplot(tidyRMSE, aes(x=span, y=thisRMSE, 
+                     color=Type, lty=as.factor(fold)))+
+  geom_line()
+
+### AGGREGATE CROSS_VALIDATION
+cvRMSE<-RMSE%>%
+  group_by(span)%>%
+  summarise(avgTrainMSE=mean(RMSE), 
+            avgTestMSE=mean(TestRMSE), 
+            sdTrain=sd(RMSE), 
+            sdTest=sd(TestRMSE))
+
+cvRMSE
+
+cvRMSE%>%
+  gather(key="Type", value=thisRMSE, -c(span))%>%
+  filter(Type %in% c("avgTrainMSE", "avgTestMSE"))%>%
+  ggplot(aes(x=span, y=thisRMSE, color=Type))+
+  geom_line()+
+  geom_point()
+
+### WHICH MINIMIZES
+which.min(cvRMSE$avgTestMSE)
+cvRMSE$avgTestMSE[which.min(cvRMSE$avgTestMSE)]
+
+## BEST SPAN
+bestSpan<-cvRMSE$span[which.min(cvRMSE$avgTestMSE)]
+bestSpan
+
+## FINAL MOD
+loessB2<-loess(y ~ x, data = poly.data, 
+              span=bestSpan)
+
+
+ggplot(poly.data, aes(x=x, y=y))+
+  geom_point()+
+  geom_line(aes(y=predict(loessB2)), color="red", size=1)+
+  ggtitle(paste("LOESS Model with Span = ", bestSpan, sep=""))
+```
+
+## 4. Compare the Models
+
+### Ex 1. COVID-19
+```{r}
+ggplot(newCaseDate, aes(x=Days, y=Daily_Cases))+
+  geom_point()+
+  geom_line(aes(y=mod_gam$fitted.values), color="red", size=1)+
+  geom_line(aes(y=model_3$fitted.values), color="blue", size=1)+
+  geom_line(aes(y=predict(loessB)), color="green", size=1)+
+  ggtitle("GAM Model (Red) vs Poly 3 (Blue) vs LOESS (Green)")
+```
+
+
+### Ex 2. Synthetic
+
+```{r}
+polyMod<-lm(y~poly(x, 10), data=poly.data)
+#summary(polyMod)
+
+polyMod5<-lm(y~poly(x, 5), data=poly.data)
+
+```
+
+```{r warning=FALSE, message=FALSE}
+vals <- seq(min(poly.data$x), max(poly.data$x), by = 0.01) 
+
+trueDF<-data.frame(vals)%>%
+  mutate(y=sin(2*pi*vals))
+
+ggplot(poly.data, aes(x=x, y=y))+
+  geom_point()+
+  geom_line(aes(y=mod_gam2$fitted.values), color="red", size=1)+
+  geom_line(aes(y=polyMod5$fitted.values), color="blue", size=1)+
+  geom_line(aes(y=predict(loessB2)), color="green", size=1)+
+  geom_line(data=trueDF, aes(x=vals, y=y), lty=2)+
+  ggtitle("GAM Model (Red) vs Poly 5 (Blue) vs LOESS (Green)")
+```
+
+So who is the winner? Drumroll please....
+
+```{r warning=FALSE, message=FALSE}
+polyMSE<-sum((predict(polyMod5, trueDF)-trueDF$y)^2)/length(trueDF$y)
+
+gamMSE<-sum((predict(mod_gam2, trueDF)-trueDF$y)^2)/length(trueDF$y)
+
+loessGAM<-sum((predict(loessB2, trueDF)-trueDF$y)^2)/length(trueDF$y)
+
+polyMSE
+gamMSE
+loessGAM
+```
+

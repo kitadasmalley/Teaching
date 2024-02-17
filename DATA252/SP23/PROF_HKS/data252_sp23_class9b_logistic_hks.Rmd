@@ -1,0 +1,422 @@
+---
+title: 'DATA252: Logistic Regression'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+## Learning Objectives
+
+In this lesson students will learn ...
+
+* The generalized linear model (GLM) framework
+* How to implement simple and multiple logistic regression
+* How to interpret the effect of coefficients in the logistic regression model
+* Perform predictions from a logistic regression model
+* Trade-offs when choosing a threshold
+* Perform variable selection using AIC for glms
+* Compare models based on their confusion matrices
+
+## Data Inspiration
+
+Motivation/Background: 
+
+* "The Pima Indians of Arizona have the highest reported prevalences of obesity and non-insulin-dependent diabetes mellitus (NIDDM). In parallel with abrupt changes in lifestyle, these prevalences in Arizona Pimas have increased to epidemic proportions during the past decades." (Ravussin et al. 1994)
+* "This study provides compelling evidence that changes in lifestyle associated with Westernization play a major role in the global epidemic of type 2 diabetes." (Schultz et al. 2006)
+
+Sources: 
+
+* https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8943493/
+* https://diabetesjournals.org/care/article/17/9/1067/17885/Effects-of-a-Traditional-Lifestyle-on-Obesity-in
+* https://diabetesjournals.org/care/article/29/8/1866/28611/Effects-of-Traditional-and-Western-Environments-on
+
+#### Step 1: Import the Data
+
+```{r}
+pima<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/diabetes.csv", 
+               header=TRUE)
+
+str(pima)
+```
+
+#### Step 2: Visualize
+
+Our goal in this step is to find feature variables that best separates the two groups (0 = diabetes negative; 1 = diabetes positive).  
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+## GLUCOSE DENSITY
+ggplot(data=pima, aes(x=Glucose ,fill=factor(Outcome)))+
+  geom_density(alpha=.5)
+
+```
+
+#### Step 3: Training and Testing
+
+We will use stratified splitting to create 70/30 - training/testing datasets to build our models.  
+
+Note: We will use the same seed as we did for the knn example so that we can compare. 
+
+```{r warning=FALSE, message=FALSE}
+library(caret)
+# Split the data into training and test set
+set.seed(314)
+caretSamp <- createDataPartition(pima$Outcome , 
+                                        p = 0.7, 
+                                        list = FALSE)
+
+## SPLIT TESTING AND TRAINING
+trainCaret  <- pima[caretSamp, ]
+testCaret <- pima[-caretSamp, ]
+```
+
+#### Step 4: Building a Model
+
+“If the only tool you have is a hammer, you tend to see every problem as a nail.” - Abraham Maslow
+
+Linear regression is the most popular model; however, the assumptions are often not met.
+```{r}
+ggplot(data=trainCaret, aes(x=Glucose, y=Outcome))+
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)
+```
+That didn't work out so well.
+
+So far we’ve covered SLR and MLR, but this only works when we have a continuous response variable.  Now let’s extend the model.  We can consider the generalized linear model framework. 
+
+## Generalized Linear Model (GLM) Framework
+
+A GLM consists of three things:
+
+* A linear predictor
+* A distribution of the response 
+* A link function between the two
+
+Note: In GLM, methods there isn’t a mathematical closed form estimates.  We need to use machine learning techniques to optimize and find estimates.
+
+The SLR and MLR models fit within this umbrella framework.  
+
+* Model: $Y=\beta_0+\beta_1 X_1+ \cdots+\beta_k X_k+\varepsilon$
+  * A linear predictor: $\beta_0+\beta_1 X_1+ \cdots+\beta_k X_k$
+  * A distribution of the response: Normal distribution 
+  * A link function between the two: Identity link 
+  
+
+Rather than modeling the response $Y$ directly, model the probability that $Y$ belongs to a category. 
+
+* Logistic Model: $logit(p)=log(\frac{p}{1-p})=\beta_0+\beta_1 X_1+ \cdots+\beta_k X_k$
+  * A linear predictor: $\beta_0+\beta_1 X_1+ \cdots+\beta_k X_k$
+  * A distribution of the response: Binomial distribution 
+  * A link function between the two: Logit link 
+
+## Simple Logistic Regression
+
+As with simple linear regression, a simple logistic regression has only one feature. 
+
+$$logit(p)=log(\frac{p}{1-p})=\beta_0+\beta_1 X_1$$
+
+
+#### Step 5: Simple Logistic Model
+
+Let's use the feature `Glucose` to predict `Outcome`.
+
+```{r}
+modSimp <- glm(Outcome ~ Glucose, data = trainCaret, family = "binomial")
+summary(modSimp)
+```
+
+**Definitions**: 
+
+* *Deviance* is a metric of the goodness of fit that is used in logistic regression models.  This is akin to the sum of squared error in regression.
+  * Resources:
+    * <https://quantifyinghealth.com/deviance-in-logistic-regression/#:~:text=Deviance%20is%20a%20number%20that,ranges%20from%200%20to%20infinity.>
+    * <https://bookdown.org/egarpor/SSS2-UC3M/logreg-deviance.html>
+    
+* *Fisher Scoring* a numerical algorithm used to estimate maximum likelihood estimates for the $\beta$ coefficients, which do not have a closed form. 
+  * Resources:
+    * <https://en.wikipedia.org/wiki/Scoring_algorithm>
+    * Go to 8:54 <https://www.youtube.com/watch?time_continue=539&v=BfKanl1aSG0>
+
+
+Plot the model: 
+```{r}
+# logistic
+ggplot(data=trainCaret, aes(x=Glucose, y=Outcome))+
+  geom_point()+
+  geom_line(aes(x = Glucose, y = modSimp$fitted), color="blue")
+```
+
+
+#### Step 6: Interpretation
+
+The estimate for the slope, $\beta_1$ is
+```{r}
+# slope
+slope<-modSimp$coefficients[2]
+slope
+```
+
+In SLR a one unit increase in the $X_1$ direction is related to a $\beta_1$ change in the response ($Y$ direction), on average.  However, this is more complex in logistic regression.  In logistic regression, a one unit increase in the $X_1$ direction is related to a $\beta_1$ change in the *log of the odds*, on average.  What does that even mean?
+
+**Definition**: 
+
+* *Odds*: $\frac{p}{1-p}$
+  * In statistics, odds are an expression of relative probabilities, generally quoted as the odds in favor. The odds (in favor) of an event or a proposition is the ratio of the probability that the event will happen to the probability that the event will not happen.
+  * <https://en.wikipedia.org/wiki/Odds#:~:text=In%20statistics%2C%20odds%20are%20an,the%20event%20will%20not%20happen>
+
+Since we are using the logit link, we will need to back-transform (applying the inverse logit) to interpret the slope.  
+
+* $logit(p)=log(\frac{p}{1-p})=\beta_0+\beta_1 (X_1+1)$
+* $e^{log(\frac{p}{1-p})}=e^{\beta_0+\beta_1 (X_1+1)}$
+* $\frac{p}{1-p}=e^{\beta_0+\beta_1 X_1+\beta_1}$
+* $\frac{p}{1-p}=e^{\beta_0+\beta_1 X_1}\times e^{\beta_1}$
+
+The above derivations illustrate that a one unit increase in the $X_1$ direction is related to a odds multiplicative effect on the odds of $e^{\beta_1}$
+
+Thus, the effect of a one unit change in $X_1$ is 
+
+```{r}
+# exponentiate
+exp(slope)
+```
+
+#### Step 7: Prediction
+
+We can use the `predict()` function using the glm model object and the partitioned testing data set.  
+
+```{r}
+# PREDICT (DEFAULT)
+pred1<-predict(modSimp, newdata = testCaret)
+head(pred1)
+```
+##### Question: 
+
+* What are your observations of these values? 
+
+By default, we the predict function is used it generates the log-odds, we would rather work with the probabilities themselves.  Let's try this code again..
+
+```{r}
+# PREDICT (Response)
+pred1R<-predict(modSimp, newdata = testCaret, type="response")
+head(pred1R)
+```
+
+
+
+#### Step 8: Thresholding and Confusion Matrix
+
+This method produces estimated probabilities of observing a success (1), therefore, we will need to set a threshold to create a binary prediction.  A natural first choice might be to use 0.50 as a threshold.  This implies that errors (false positives and false negatives) have equal weight.
+
+```{r}
+## CONFUSION MATRIX
+conf_mat1<-data.frame(testOutcome=testCaret$Outcome, predOut=pred1R>.5)
+table(conf_mat1$predOut, conf_mat1$testOutcome)
+
+## CORRECT RATE
+mean(conf_mat1$predOut==conf_mat1$testOutcome)
+```
+In reality, errors might have different weights.  It might be worse to have a false negative because that patient could have sought treatment if they had the proper diagnoses.  If we wanted to decrease the rate of false negatives, we would want to increase the threshold.  However, the cost of this would be an increase in false positives. 
+
+```{r}
+## CONFUSION MATRIX
+conf_mat2<-data.frame(testOutcome=testCaret$Outcome, predOut=pred1R>.3)
+table(conf_mat2$predOut, conf_mat2$testOutcome)
+
+## CORRECT RATE
+mean(conf_mat2$predOut==conf_mat2$testOutcome)
+```
+
+##### Question: 
+
+* What would you set the threshold to to have no false positives? What would be the cost of this? (in terms of error)
+
+* What would you set the threshold to to have no false negatives? What would be the cost of this? (in terms of error)
+
+## Multiple Logistic Regression
+
+In multiple logistic regression we consider more features! 
+
+$$logit(p)=log(\frac{p}{1-p})=\beta_0+\beta_1 X_1+\beta_2 X_2+\cdots+\beta_k X_k$$
+
+#### Step 9: Visualize
+
+```{r message=FALSE, warning=FALSE}
+library(GGally)
+library(tidyverse)
+pima$Outcome<-as.factor(pima$Outcome)
+
+ggpairs(pima, 
+        ggplot2::aes(color=factor(Outcome)))
+```
+
+#### Step 10: Fit a Saturated Model
+
+```{r}
+modMulti<-glm(Outcome ~.,
+          data = trainCaret, family = "binomial")
+
+summary(modMulti)
+```
+
+##### Question: 
+
+* Is the effect of Pregnancies significant at an $\alpha=0.05$ level?
+* What is the effect of one additional Pregnancy on the odds of having diabetes?
+
+#### Step 11: Variable Selection
+
+If we want to perform stepwise selection for a binary response we will need to use the `bestglm` package.  This package will perform stepwise selection by minimizing the AIC.
+
+```{r}
+#install.packages("bestglm")
+library(bestglm)
+```
+
+##### Backward Selection
+
+Backward selection is the default of the `step()` function.  Observe that the algorithm starts with all the variables, then removes `SkinThickness`, and then stops because it has minimized the AIC. 
+
+```{r}
+## Backward
+step(modMulti)
+```
+
+##### Forward Selection
+
+We can perform forward selection by specifying the full model and the null model.  This algorithm works by adding one variable in at a time and then stops when the AIC is minimized. 
+
+```{r}
+## NULL MODEL
+mod0 <- glm(Outcome ~ 1, family = binomial, data = trainCaret)
+
+## FORWARD Selection
+step(mod0, scope = list(upper = modMulti, lower = mod0), 
+     method = "forward")
+```
+
+
+##### Best Subset Selection
+
+Choose the best model of a given size.
+
+```{r}
+# the Xy matrix needs y as the right-most variable
+# this one already has Outcome at the last column
+best.Xy <- trainCaret
+
+# Run best subset
+bglm.AIC = bestglm(Xy = best.Xy, family = binomial, IC = "AIC", 
+                   TopModels = 10)
+bglm.AIC$BestModels
+
+```
+
+#### Step 12: Best Model
+
+Observe that the **best** model is agreed upon by the backward, forward, and best subset methods! 
+
+```{r}
+## BEST MODEL INCLUDES:
+## Pregnancies+Glucose+BloodPressure+Insulin+BMI+DiabetesPedigreeFunction+Age
+modBest<-glm(Outcome ~Pregnancies+Glucose+BloodPressure+
+            Insulin+BMI+DiabetesPedigreeFunction+Age,
+          data = trainCaret, family = "binomial")
+
+summary(modBest)
+```
+
+Predict for the best model:
+
+```{r}
+## Predict
+predBest<-predict(modBest, newdata = testCaret, type="response")
+```
+
+Threshold and Confusion Matrix:
+```{r}
+## Threshold
+conf_matBest<-data.frame(testOutcome=testCaret$Outcome, predOut=predBest>.5)
+
+## Confusion Matrix
+table(conf_matBest$predOut, conf_matBest$testOutcome)
+
+## CORRECT RATE
+mean(conf_matBest$predOut==conf_matBest$testOutcome)
+```
+
+#### Step 13: Compare Models
+
+Using the same training and testing sets, we can compare the error rates.  Which model would you pick?
+
+##### A. Simple Logistic
+
+Only uses `Glucose` to predict `Outcome`.
+
+```{r}
+## Confusion Matrix
+table(conf_mat1$predOut, conf_mat1$testOutcome)
+
+## CORRECT RATE
+mean(conf_mat1$predOut==conf_mat1$testOutcome)
+```
+
+
+##### B. Best Multiple Logistic
+
+Uses `Pregnancies`, `Glucose`, `BloodPressure`, `Insulin`, `BMI`, `DiabetesPedigreeFunction`, and `Age` to predict `Outcome`.
+
+```{r}
+## Confusion Matrix
+table(conf_matBest$predOut, conf_matBest$testOutcome)
+
+## CORRECT RATE
+mean(conf_matBest$predOut==conf_matBest$testOutcome)
+```
+
+
+##### C. KNN
+
+Uses the 12 closest neighbors.
+
+```{r echo=FALSE}
+## need train, test, cl, and k
+trainFea<-trainCaret%>%
+  select(-Outcome)
+
+testFea<-testCaret%>%
+  select(-Outcome)
+
+trainOut<-trainCaret$Outcome
+testOut<-testCaret$Outcome
+
+library(class)
+
+## best pred...
+knn.pred12=knn(train = trainFea,
+              test = testFea,
+              cl = trainOut,
+              k=12)
+```
+
+From the KNN lesson we had
+
+
+
+```{r }
+## Confusion Matrix
+table(knn.pred12,testOut)
+
+## CORRECT RATE
+mean(knn.pred12==testOut)
+```
+
+
+
+

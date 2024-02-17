@@ -1,0 +1,353 @@
+---
+title: 'DATA252: Classification Trees and Aggregation Methods'
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will learn ...
+
+* Implement and interpret classification tree in R
+* Learn how to prune a tree 
+* Identify and discuss loss functions for classification methods
+* Apply tree aggregation methods (bagging, random forest, boosting)
+* Critically evaluate tree models for their advantages and disadvantages. 
+
+## Data Inspiration
+
+Motivation/Background: 
+
+* "The Pima Indians of Arizona have the highest reported prevalences of obesity and non-insulin-dependent diabetes mellitus (NIDDM). In parallel with abrupt changes in lifestyle, these prevalences in Arizona Pimas have increased to epidemic proportions during the past decades." (Ravussin et al. 1994)
+* "This study provides compelling evidence that changes in lifestyle associated with Westernization play a major role in the global epidemic of type 2 diabetes." (Schultz et al. 2006)
+
+Sources: 
+
+* https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8943493/
+* https://diabetesjournals.org/care/article/17/9/1067/17885/Effects-of-a-Traditional-Lifestyle-on-Obesity-in
+* https://diabetesjournals.org/care/article/29/8/1866/28611/Effects-of-Traditional-and-Western-Environments-on
+
+#### Step 1: Import the Data
+
+```{r}
+pima<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/diabetes.csv", 
+               header=TRUE)
+
+pima$Outcome<-as.factor(pima$Outcome)
+
+str(pima)
+```
+
+#### Step 2: Training and Testing
+
+We will use stratified splitting to create 70/30 - training/testing datasets to build our models.  
+
+Note: We will use the same seed as we did for the knn example so that we can compare. 
+
+```{r warning=FALSE, message=FALSE}
+library(caret)
+# Split the data into training and test set
+set.seed(252)
+caretSamp <- createDataPartition(pima$Outcome , 
+                                        p = 0.7, 
+                                        list = FALSE)
+
+## SPLIT TESTING AND TRAINING
+trainCaret  <- pima[caretSamp, ]
+testCaret <- pima[-caretSamp, ]
+```
+
+## Single Classification Tree
+
+#### Step 3: Classification Tree
+
+```{r}
+set.seed(252)
+library(rpart)
+
+classTree<- rpart(Outcome ~ .,
+                  data = trainCaret,
+                  method = "class")
+
+### PLOT TREE
+library(rpart.plot)
+rpart.plot(classTree)
+
+### Plot CP
+plotcp(classTree)
+
+printcp(classTree)
+
+
+## WHICH CP
+minCP<-classTree$cptable[which.min(classTree$cptable[,"xerror"]),"CP"]
+```
+#### Step 4: Prune the Tree
+
+Find the CP that minimizes the error.
+
+```{r}
+library(rpart.plot)
+
+prune_classTree <- prune(classTree, cp = minCP )
+rpart.plot(prune_classTree )
+```
+
+#### Step 5: Predict
+
+```{r}
+## DEFAULT TREE 
+### PREDICT
+predTree1<-predict(classTree , testCaret, type="class")
+
+### CONFUSION MATRIX
+cmTree1<-table(testCaret$Outcome, predTree1)
+cmTree1
+
+#### CORRECT RATE
+mean(testCaret$Outcome==predTree1)
+
+## PRUNED TREE 
+### PREDICT
+predTree2<-predict(prune_classTree , testCaret, type="class")
+
+### CONFUSION MATRIX
+cmTree2<-table(testCaret$Outcome, predTree2)
+cmTree2
+
+#### CORRECT RATE
+mean(testCaret$Outcome==predTree2)
+```
+##### Question: 
+
+* What are your observations? 
+
+
+#### Step 6: Trees are Highly Variable
+
+##### Take #2
+
+Try a second random split.
+
+```{r echo=FALSE}
+## TAKE 2
+set.seed(123)
+caretSamp2 <- createDataPartition(pima$Outcome , 
+                                        p = 0.7, 
+                                        list = FALSE)
+
+## SPLIT TESTING AND TRAINING
+trainCaret2  <- pima[caretSamp2, ]
+testCaret2 <- pima[-caretSamp2, ]
+
+## NEW TREE
+classTree2<- rpart(Outcome ~ .,
+                  data = trainCaret2,
+                  method = "class")
+
+#plotcp(classTree2)
+
+## WHICH CP
+minCP2<-classTree2$cptable[which.min(classTree2$cptable[,"xerror"]),"CP"]
+
+## PRUNE TREE
+prune_classTree2 <- prune(classTree2, cp = minCP2 )
+rpart.plot(prune_classTree2)
+```
+
+##### Take #3
+
+Try a third random split.
+
+```{r echo=FALSE}
+## TAKE 3
+set.seed(314)
+caretSamp3 <- createDataPartition(pima$Outcome , 
+                                        p = 0.7, 
+                                        list = FALSE)
+
+## SPLIT TESTING AND TRAINING
+trainCaret3  <- pima[caretSamp3, ]
+testCaret3 <- pima[-caretSamp3, ]
+
+## NEW TREE
+classTree3<- rpart(Outcome ~ .,
+                  data = trainCaret3,
+                  method = "class")
+
+#plotcp(classTree3)
+
+## WHICH CP
+minCP3<-classTree3$cptable[which.min(classTree3$cptable[,"xerror"]),"CP"]
+
+## PRUNE TREE
+prune_classTree3 <- prune(classTree3, cp = minCP3 )
+rpart.plot(prune_classTree3)
+```
+
+## Bagging
+
+Bagging stands for "bootstrap aggregation".  Random bootstrap samples (with replacement) of the data are used to create trees.  
+
+#### Step 7A: Bagging
+
+The big idea is that averaging a set of observations reduces variance; however, you lose the interpretability.  
+
+
+```{r}
+### BAGGING
+library(caret)
+library(ipred)  #includes the bagging function 
+library(rpart)
+
+set.seed(252)
+pimaBag <- bagging(Outcome ~ .,
+                   data = trainCaret,
+                   nbagg = 150,   
+                   coob = TRUE,
+                   control = rpart.control(minsplit = 2, cp = 0))
+
+## PREDICT
+predBag<-predict(pimaBag, testCaret, type="class")
+
+## CONFUSION MATRIX
+cmBag<-table(testCaret$Outcome, predBag)
+cmBag
+
+## CORRECT RATE
+mean(testCaret$Outcome==predBag)
+```
+
+#### Step 7B: BAG with the Caret Method
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+
+### BAG
+set.seed(252)
+caretBag <- train(Outcome ~., 
+               data = trainCaret, 
+               method = "treebag",
+               trControl = trainControl("cv", number = 10),
+               importance = TRUE
+)
+
+predCaretBag <- caretBag %>% predict(testCaret)
+
+# CONFUSION MATRIX
+table(predCaretBag, testCaret$Outcome)
+
+# CORRECT RATE
+mean(predCaretBag == testCaret$Outcome)
+```
+##### Problems with Bagging
+
+Problem with Bagging: 
+
+* Trees can be very similar 
+* Dominated by a few strong / moderately strong predictor
+* Bagged trees can be highly correlated 
+* Does not lead to large reduction in variance when averaging  
+
+#### Step 8: Bag Variable Importance
+
+```{r}
+library(vip)
+vip(caretBag) 
+```
+
+## Random Forest
+
+#### Step 9A: Random Forest with Caret
+
+The big idea is to improve on bagging to create decorrelated trees.
+
+When building decision tree, each split only considers a random subset of predictors, $m \approx \sqrt{p}$.  A new sample is taken for each split.  Therefore, each split is not allowed to consider a majority of the available predictors.
+
+```{r}
+### RF
+set.seed(252)
+caretRF <- train(Outcome ~., 
+               data = trainCaret, 
+               method = "rf",
+               trControl = trainControl("cv", number = 10),
+               importance = TRUE
+)
+# Best tuning parameter
+caretRF$bestTune
+
+# Final model
+caretRF$finalModel
+
+## PREDICT
+predCaretRF <- caretRF %>% predict(testCaret)
+
+## TABLE
+table(predCaretRF, testCaret$Outcome)
+
+## MEAN
+mean(predCaretRF == testCaret$Outcome)
+```
+#### Step 9B: Variable Importance RF
+
+```{r}
+library(randomForest)
+# Plot MeanDecreaseAccuracy
+varImpPlot(caretRF$finalModel, type = 1)
+# Plot MeanDecreaseGini
+varImpPlot(caretRF$finalModel, type = 2)
+
+#library(vip)
+#vip(caretRF$finalModel, type = 1) 
+#vip(caretRF$finalModel, type = 2) 
+```
+
+## Boosting
+
+The big idea is that trees are grown sequentially.  Learns slowly (i.e. updates based on some scaled version of the previous tree).  Tends to perform well.  Each tree grown using information from previously grown trees.  Uses original data and information from residuals
+
+Three tuning parameters: 
+
+* $B$ : Number of trees
+  * Chosen via cross-validation, because it can overfit
+  
+* $\lambda$: Shrinkage parameter 
+  * Controls learning rate (often 0.01 or 0.001)
+  
+* $d$ : Number of splits in each tree
+  * Often $d=1$ (stump/single split)
+
+
+#### Step 10A: Boosting with Caret
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+#install.packages("xgboost)
+library(xgboost)
+
+caretBoost <- train(Outcome ~., 
+               data = trainCaret,
+               method="xgbTree",
+               trControl = trainControl("cv", number = 10),
+               verbosity = 0)
+
+# Best tuning parameter
+caretBoost$bestTune
+
+# Make predictions on the test data
+predCaretBoost <- caretBoost %>% predict(testCaret)
+
+## TABLE
+table(predCaretBoost, testCaret$Outcome)
+
+## MEAN
+mean(predCaretBoost == testCaret$Outcome)
+```
+
