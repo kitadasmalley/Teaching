@@ -1,0 +1,355 @@
+---
+title: 'DATA252: Principal Component Analysis'
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will ...
+
+* Review/Get the big ideas for eigenvalues and eigenvectors
+* Apply PCA for dimension reduction 
+* Apply PCA to graphics
+
+## Resources: 
+
+* StatQuest: Principal Component Analysis (PCA), Step-by-Step <https://www.youtube.com/watch?v=FgakZw6K1QQ&t=949s>
+* Machine Learning for Biostatistics: Principal components analysis <https://bookdown.org/tpinto_home/Unsupervised-learning/principal-components-analysis.html>
+* ISLR: <https://static1.squarespace.com/static/5ff2adbe3fe4fe33db902812/t/6062a083acbfe82c7195b27d/1617076404560/ISLR%2BSeventh%2BPrinting.pdf#page=379>
+
+## Big Picture 
+
+Principal components analysis (PCA) is often used as a dimension reduction) technique because it uses linear algebra to find a relatively small number of linear combinations of variables to explain most of the variablity.
+
+If we have $p$ variables $x_1, x_2, \dots, x_p$ a PCA would produce $z_1, z_2,\dots, z_k$ linear combinations of the original variables
+
+$$z_1 = \phi_{11}x_1+\phi_{12}x_2+\dots +\phi_{1p}x_p$$
+$$z_2 = \phi_{21}x_1+\phi_{22}x_2+\dots +\phi_{2p}x_p$$
+
+$$z_k = \phi_{k1}x_1+\phi_{k2}x_2+\dots +\phi_{kp}x_p$$
+where $k=min(n,p)$.  These components are ordered by the amount of variablity that they explain and the hope is that the first few components explain a majority of the variablity.  The big idea here is that if all the variables are independent, we would need information for every variables; however, if there is correlation between the variables we can leverage that.  
+
+We will assume that the variables $x_1, x_2, \dots, x_p$ are scaled such that the mean is zero and the standard devaition is one.  Our goal is to find the *component loading vector* $(\phi_{i1}, \phi_{i2}, \dots, \phi_{ip})$
+
+
+## Eigen-stuff
+
+Recall, for a square $n\times n$ matrix $\mathbf{A}$, 
+$$\mathbf{A} \mathbf{v}=\mathbf{\lambda} \mathbf{v}$$, where $\mathbf{v}$ is the eigenvector and $\mathbf{\lambda}$ is the eigenvalue.
+
+"The eigenvectors and eigenvalues of a covariance (or correlation) matrix represent the “core” of a PCA: The eigenvectors (principal components) determine the directions of the new feature space, and the eigenvalues determine their magnitude. In other words, the eigenvalues explain the variance of the data along the new feature axes."
+
+Citation: <https://sebastianraschka.com/Articles/2015_pca_in_3_steps.html#:~:text=The%20eigenvectors%20and%20eigenvalues%20of,the%20eigenvalues%20determine%20their%20magnitude.>
+
+## Ex 1: Toy Example
+
+In this pretend example inspired by StatCast, imagine that we have two genes and six lab mice.  
+
+```{r}
+#####GENES AND MOUSE
+sq<-data.frame(mouse=1:6, 
+               gene1=c(10, 11, 8, 3, 2, 1), 
+               gene2=c(6, 4, 5, 3, 2.8, 1))
+
+```
+
+### Plot the Data
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+### GRAPH
+### YOUR CODE HERE ###
+```
+
+### Center the Data
+
+Data is centered (and sometimes scaled) for PCA.
+
+```{r}
+## SCALED
+mouse.scaled <- apply(### YOUR CODE HERE ###
+
+scaledDF<-as.data.frame(mouse.scaled )
+
+ggplot(scaledDF, aes(x=gene1, y=gene2))+
+  geom_point()
+```
+
+### Covariance Matrix
+
+```{r}
+### COVARIANCE MAT
+cov.mouse <- cov(### YOUR CODE HERE ###
+#head(cov.mouse)
+```
+
+### Eigenvalues and Eigenvectors 
+
+```{r}
+#eigenvalues and eigenvectors 
+#of the covariance matrix
+ev.mouse <- eigen(### YOUR CODE HERE ###
+#head(ev.mouse)
+```
+
+
+
+### Plotting Eigenvectors 
+
+The ratio between gene1 and gene2 in the first principal component is 1:1, so $y=x$.  The ratio between gene1 and gene2 in the second principal component is -1:1, so $y=-x$. 
+
+```{r}
+ggplot(scaledDF, aes(x=gene1, y=gene2))+
+  geom_point()+
+  geom_abline(### YOUR CODE HERE ###
+  geom_abline(### YOUR CODE HERE ###
+```
+
+### Projecting
+
+```{r}
+pc12<-ev.mouse$vector[,1:2]%>%
+  as.data.frame()%>%
+  cbind(variable=c("gene1", "gene2"))
+
+
+dim12<-mouse.scaled  %>%
+  as.data.frame()%>%
+  cbind(ID=1:dim(mouse.scaled )[1])%>%
+  gather("variable", "scaledVal", -ID)%>%
+  left_join(pc12)%>%
+  mutate(dim1=scaledVal*V1, 
+         dim2=scaledVal*V2)%>%
+  group_by(ID)%>%
+  summarise(z1=sum(dim1), 
+            z2=sum(dim2))
+
+ggplot(dim12, aes(x=z1, y=z2))+
+  geom_point()+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 0)
+```
+
+## Ex 2: Breast Cancer
+
+From <https://bookdown.org/tpinto_home/Unsupervised-learning/#dataset-used-in-the-examples>
+
+The dataset bdiag.csv contains quantitative information from digitized images of a diagnostic test (fine needle aspirate (FNA) test on breast mass) for the diagnosis of breast cancer. The variables describe characteristics of the cell nuclei present in the image.
+
+Variables Information:
+
+* ID number
+* Diagnosis (M = malignant, B = benign)
+
+and ten real-valued features are computed for each cell nucleus:
+
+* radius (mean of distances from center to points on the perimeter)
+* texture (standard deviation of gray-scale values)
+* perimeter
+* area
+* smoothness (local variation in radius lengths)
+* compactness (perimeter^2 / area - 1.0)
+* concavity (severity of concave portions of the contour)
+* concave points (number of concave portions of the contour)
+* symmetry
+* fractal dimension (“coastline approximation” - 1)
+
+### Step 0: Load the Data
+
+```{r}
+set.seed(1974) 
+
+bdiag<- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/bdiag.csv", stringsAsFactors = TRUE)
+
+```
+
+### Step 1: Visualize
+
+```{}
+library(GGally)
+
+bdiagGG<-bdiag[,c("radius_mean", "texture_mean", 
+                                "perimeter_mean", "area_mean", "smoothness_mean", "compactness_mean", 
+                                "concavity_mean", "concave.points_mean", "symmetry_mean", "fractal_dimension_mean", "diagnosis")]
+
+## GGALLY
+### YOUR CODE HERE ###
+```
+
+
+### Step 2: Select Variables
+
+```{r}
+bdiag.pca.data <- bdiag[,c("radius_mean", "texture_mean", 
+                                "perimeter_mean", "area_mean", "smoothness_mean", "compactness_mean", 
+                                "concavity_mean", "concave.points_mean", "symmetry_mean", "fractal_dimension_mean")]
+
+```
+
+### Step 3: PCA Function 
+
+```{r}
+bdiag.pca <- prcomp(### YOUR CODE HERE ###
+```
+
+### Step 4: Variance Explained
+
+```{r}
+#install.packages("factoextra")
+library(factoextra)
+summary(### YOUR CODE HERE ###
+
+```
+
+### Step 5: Scree Plot
+
+```{r}
+#install.packages("tidyr")
+library(tidyr)
+fviz_eig(### YOUR CODE HERE ###
+```
+
+### Step 6: Loading Vectors
+
+
+```{r}
+#loading vectors  
+fviz_pca_var(### YOUR CODE HERE ###
+
+fviz_pca_var(### YOUR CODE HERE ###
+
+fviz_pca_var(### YOUR CODE HERE ###
+
+```
+
+### Step 7: Projections 
+
+```{r}
+groups  <-  ### YOUR CODE HERE ###
+fviz_pca_ind(bdiag.pca,
+             col.ind = groups, # color by groups
+             palette = c("blue", "red"),
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence",
+             legend.title = "Groups",
+             repel = FALSE,
+             label="none",
+             axes=c(1,2)
+)
+
+```
+
+## Ex 3: Go Bearcats
+
+```{r}
+#install.packages("jpeg")
+#install.packages("graphics")
+library(jpeg)
+library(graphics)
+
+bearcat <- readJPEG("/cloud/project/bearcat.jpeg")[,,2]
+```
+
+### Step 1: Look at Image
+
+```{r}
+par(mfrow=c(1,1))
+plot(1:2, type='n', axes=F, ann=F)
+rasterImage(bearcat, 1, 1, 2, 2)
+
+dim(bearcat)
+```
+
+### Step 2: Correlation Matrix
+
+```{r}
+#install.packages("gplots")
+library(gplots)
+
+#color for the heatmap
+col.correlation <- colorRampPalette(c("red","yellow","darkgreen"), 
+                                    space = "rgb")(30)
+heatmap.2(### YOUR CODE HERE ###
+          Rowv = F, Colv = F, 
+          dendrogram = "none",
+          trace="none", 
+          col=col.correlation)
+```
+
+### Step 3: PCA
+
+```{r}
+library(factoextra)
+
+#PCA
+bearcat.pca <- prcomp(### YOUR CODE HERE ###
+
+fviz_eig(### YOUR CODE HERE ###
+
+```
+
+### Step 4: Compare Principal Components
+
+```{r}
+#The intensities given by the first 5 components
+bearcat.pca5 <- bearcat.pca$x[,1:5] %*% t(bearcat.pca$rotation[,1:5])
+
+#this is just to make sure all the values
+#remain within 0 and 1 (due to rounding in the
+#calculation, sometimes the values go slightly higher than 1)
+bearcat.pca5[bearcat.pca5>1] <-1
+bearcat.pca5[bearcat.pca5<0] <-0
+
+#You can have a look at the image
+par(mfrow=c(1,1))
+plot(1:2, type='n', axes=F, ann=F)
+title ("original")
+rasterImage(bearcat, 1, 1, 2, 2)
+
+plot(1:2, type='n', axes=F, ann=F)
+title("Image with 5 components from PCA")
+rasterImage(bearcat.pca5, 1, 1, 2, 2)
+```
+
+More principal components
+
+```{r}
+# Intensities with 20, 50, 100 and 534 components
+bearcat.pca.j <- lapply(c(10, 20, 50, 250), function(j) {
+  jcomp <- bearcat.pca$x[,1:j] %*% t(bearcat.pca$rotation[,1:j])
+  jcomp[jcomp>1] <-1
+  jcomp[jcomp<0] <-0
+  return(jcomp)
+}
+)
+
+par(mfrow=c(1,1))
+plot(1:2, type='n', axes=F, ann=F)
+title ("10 components")
+rasterImage(bearcat.pca.j[[1]], 1, 1, 2, 2)
+
+plot(1:2, type='n', axes=F, ann=F)
+title("20 components")
+rasterImage(bearcat.pca.j[[2]], 1, 1, 2, 2)
+
+plot(1:2, type='n', axes=F, ann=F)
+title("50 components")
+rasterImage(bearcat.pca.j[[3]], 1, 1, 2, 2)
+
+plot(1:2, type='n', axes=F, ann=F)
+title("250 components (original image)")
+rasterImage(bearcat.pca.j[[4]], 1, 1, 2, 2)
+```
+

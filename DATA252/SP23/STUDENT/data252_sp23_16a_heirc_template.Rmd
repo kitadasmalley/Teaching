@@ -1,0 +1,98 @@
+---
+title: 'DATA252: Hierarchical clustering'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will ...
+
+* Implement the Hierarchical clustering algorithm
+* Visualize the model
+
+
+## Resources: 
+
+The following example comes from:
+
+* Machine Learning for Biostatistics <https://bookdown.org/tpinto_home/Unsupervised-learning/k-means-clustering.html>
+
+## Hierarchical clustering
+
+## Step 0: Load Data
+
+```{r}
+bdiag<- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/bdiag.csv", stringsAsFactors = TRUE)
+```
+
+## Step 1: Select
+
+```{r}
+library(tidyverse)
+bdiag.2vars <- bdiag%>%
+  select(### YOUR CODE HERE ###
+
+
+```
+
+## Step 2: Distances
+
+```{r}
+#distances between the observations
+bdiag.dist <- dist(### YOUR CODE HERE ###
+#### CHECK: what is dist() doing?
+
+
+```
+## Step 3: Complete Linkage
+
+```{r}
+#Dendrogram using the complete linkage method
+bdiag.ddgram <- hclust(### YOUR CODE HERE ###
+
+```
+
+## Step 4: Plot
+
+```{r}
+#Plot the dendrogram
+#the option hang = -1 will make the
+#labels appear below 0
+
+plot(### YOUR CODE HERE ###
+```
+## Step 5: Cut
+
+```{r}
+plot(### YOUR CODE HERE ###
+```
+
+## Step 6: Cluster
+
+```{r}
+plot(### YOUR CODE HERE ###
+rect.hclust(### YOUR CODE HERE ###
+
+group3 <- cutree(### YOUR CODE HERE ###
+table(### YOUR CODE HERE ###
+```
+
+## Step 7: Visualize
+
+```{r}
+library(factoextra)
+
+fviz_cluster(### YOUR CODE HERE ###
+```
+

@@ -1,0 +1,408 @@
+---
+title: 'DATA252: Regression Trees'
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will learn how to implement...
+
+* Regression trees 
+* Prune a tree
+* Perform class validation to choose tree complexity
+
+Citation: 
+
+Examples for this lesson come from 
+
+<https://bookdown.org/tpinto_home/Beyond-Additivity/>
+
+
+### Osteoporosis
+
+Facts: 
+
+* Osteoporosis is a bone disease that develops when bone mineral density and bone mass decreases, or when the structure and strength of bone changes. This can lead to a decrease in bone strength that can increase the risk of fractures (broken bones).
+* After age 50, bone breakdown (resorption) outpaces bone formation and bone loss often accelerates, particularly at the time of menopause.
+* Osteoporosis is more common in women. It affects almost 20% (1 in 5) of women aged 50 and over and almost 5% (1 in 20) of men aged 50 and over.
+
+Sources: 
+
+* NIH : <https://www.niams.nih.gov/health-topics/osteoporosis#:~:text=Osteoporosis%20is%20a%20bone%20disease,of%20fractures%20(broken%20bones).>
+* Johns Hopkins:  <https://www.hopkinsmedicine.org/health/conditions-and-diseases/osteoporosis/osteoporosis-what-you-need-to-know-as-you-age>
+* CDC : <https://www.cdc.gov/genomics/disease/osteoporosis.htm#:~:text=Osteoporosis%20is%20more%20common%20in,until%20they%20break%20a%20bone.>
+
+
+#### 1. Import the Data
+
+```{r}
+bmd.data<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/bmd.csv")
+```
+
+The bone mineral density dataset contains 169 records with the following variables: 
+
+* `id` : patient’s number
+* `age` : patient’s age
+* `fracture` : hip fracture (fracture / no fracture)
+* `weight_kg` : weight measured in Kg
+* `height_cm` : height measure in cm
+* `waiting_time` : time the patient had to wait for the densitometry (in minutes)
+* `bmd` : bone mineral density measure in the hip
+
+
+##### Tasks 
+
+* Look at the structure of the data.
+* Identify what the response variable is and what variables could be used as features in the model. 
+
+#### 2. Feature Engineering
+
+Body mass index (BMI) is a common metric used as a medical screening tool that measures a ratio between weight and height (squared).
+
+The `bmd` data are in metric units, kilograms (kg) and centimeters (cm), for weight and height respectively.  Therefore, we must the following equation to calculate BMI
+
+$$BMI = \frac{weight (kg)}{[height (m)]^2}$$
+Create a new variable for `bmi` in this dataframe.
+
+```{r warning=FALSE, message=FALSE}
+bmd.data$bmi <- ### YOUR CODE HERE ##
+```
+
+
+#### 3. Visualize the Data
+
+Make a pairs plot using `GGally` to explore relationships between `bmd`, `age`, `sex`, and `bmi`.  The color aesthetic should be mapped to `sex`.
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(GGally)
+
+ggpairs(### YOUR CODE HERE ##)
+```
+
+##### Question 
+
+* What relationships do you observe in the pairs plot?
+
+
+### Beyond Additivity
+
+Let's dive further into the relationship between `bmd` and `age`.
+Make a scatterplot to show the relationship between `bmd` and age. 
+
+```{r}
+### YOUR CODE HERE ##
+```
+
+##### Question 
+
+* Does the relationship between `bmd` and `age` appear to be linear?
+
+
+
+#### 1. Fit a linear model
+
+```{r}
+## FIT A MODEL
+lmMod <- ### YOUR CODE HERE ##
+
+## SUMMARY
+summary(lmMod)
+
+## DIAGNOSTICS
+plot(lmMod)
+```
+
+##### Question 
+
+* Are the linear model assumptions met?
+
+#### 2. Fit a Smooth
+
+Use `geom_smooth()` to fit a loess model to these data. 
+```{r}
+### YOUR CODE HERE ##
+```
+
+It appears that these data are not linear.  So now what?!
+
+### Regression Trees
+
+Decision trees can be make for continuous or discrete outcomes and are sometimes referred to as CART (Classification And Regression Trees).
+
+
+Trees create a set of binary decision rules to partition the feature space into $J$ distinct regions.  
+
+Optimal partitions are found by minimizing the loss function
+
+$$\sum_j^J \sum_{i \in R_j} (y_i-\bar{y}_{R_j})^2$$
+
+How should we find the optimal partition? 
+
+#### CAUTION: Unnecessary but fun code!!! 
+
+```{r warning=FALSE, message=FALSE}
+### MAKE A SEQUENCE TO PARITION
+ageSeq<-seq(36, 88, by=1)
+length(ageSeq)
+
+### CALCULATE THE MEANS FOR THE REGIONS
+low<-c()
+up<-c()
+for(i in 1:length(ageSeq)){
+lowerMean<-mean(bmd.data$bmd[bmd.data$age<ageSeq[i]])
+upperMean<-mean(bmd.data$bmd[bmd.data$age>=ageSeq[i]])
+
+low<-c(low, lowerMean)
+up<-c(up, upperMean)
+}
+
+### MAKE DATA FRAMES
+minDF<-data.frame(x = rep(min(bmd.data$age), length(ageSeq)), 
+                   y = low, 
+                   group=1:length(ageSeq), 
+                   type=rep("lower", length(ageSeq)))
+
+mid1DF<-data.frame(x = ageSeq, 
+                   y = low, 
+                   group=1:length(ageSeq), 
+                   type=rep("lower", length(ageSeq)))
+
+mid2DF<-data.frame(x = ageSeq+0.1, 
+                   y = up, 
+                   group=1:length(ageSeq), 
+                   type=rep("upper", length(ageSeq)))
+
+maxDF<-data.frame(x = rep(max(bmd.data$age), length(ageSeq)), 
+                   y = up, 
+                   group=1:length(ageSeq), 
+                   type=rep("upper", length(ageSeq)))
+
+meanDF<-minDF%>%
+  rbind(mid1DF)%>%
+  rbind(mid2DF)%>%
+  rbind(maxDF)
+```
+
+```{r warning=FALSE, message=FALSE}
+### USE PLOTLY
+#install.packages("plotly")
+library(plotly)
+
+p<-ggplot()+
+  geom_line(data=meanDF, aes(x=x, y=y,color=type, frame=group),
+            lwd=2)+
+  geom_point(data=bmd.data, aes(x=age, y=bmd))
+
+### WOW! COOL!
+ggplotly(p)
+```
+Calculate the residual sum of squares
+
+```{r}
+RSS<-c()
+for(i in 1:length(ageSeq)){
+lowerRSS<-sum((bmd.data$bmd[bmd.data$age<ageSeq[i]]-mean(bmd.data$bmd[bmd.data$age<ageSeq[i]]))^2)
+upperRSS<-sum((bmd.data$bmd[bmd.data$age>=ageSeq[i]]-mean(bmd.data$bmd[bmd.data$age>=ageSeq[i]]))^2)
+
+RSS<-c(RSS, lowerRSS+upperRSS)
+}
+
+rssDF<-data.frame(ageSeq, RSS)
+
+ggplot(rssDF, aes(x=ageSeq, y=RSS))+
+  geom_point()+
+  geom_line()
+```
+What the best location for a partition?
+
+```{r}
+## MIN RSS
+min(RSS)
+
+## WHICH INDEX
+which.min(RSS)
+
+## WHICH CUT OFF
+ageSeq[which.min(RSS)]
+
+### SHOW THE PARITION
+meanDF%>%
+  filter(group==35)%>%
+  ggplot()+
+  geom_line(aes(x=x, y=y,color=type),
+            lwd=2)+
+  geom_point(data=bmd.data, aes(x=age, y=bmd))
+```
+
+This is how trees work! 
+
+#### RPART
+
+```{r}
+#install.packages("rpart")
+#install.packages("rpart.plot")
+library(rpart)  #library for CART
+library(rpart.plot)
+
+### Read about the defaults
+?rpart.control
+```
+
+#### Default Tree
+
+```{r}
+defaultTree <- ### YOUR CODE HERE ##
+
+rpart.plot(defaultTree)
+```
+
+#### Grow a Full Tree
+
+```{r}
+fullTree <- ### YOUR CODE HERE ##
+
+rpart.plot(fullTree)  
+```
+
+#### Complexity
+
+```{r}
+plotcp(fullTree) 
+
+#printcp(fullTree) 
+
+## MIN ERROR
+which.min(fullTree$cptable[,"xerror"])
+
+## WHICH CP
+fullTree$cptable[which.min(fullTree$cptable[,"xerror"]),"CP"]
+```
+
+#### Prune Tree
+
+```{r}
+pruneTree <- prune(fullTree, cp=### YOUR CODE HERE ##)   #prune the tree with cp=0.02
+
+printcp(pruneTree)
+
+rpart.plot(pruneTree)  
+```
+
+What do the partitions look like?
+
+```{r}
+ggplot( bmd.data, aes(x=age, y=bmd))+
+  geom_point()+
+  geom_vline(xintercept=c(71, 84, 85, 45, 54, 53, 63, 69, 70), 
+             color="blue", lty=2)
+```
+
+#### Predict
+
+Individual observations: 
+
+```{r}
+predict(pruneTree,                       #prediction using the tree
+        newdata = data.frame(age=70))
+
+predict(lmMod,                           #prediction using the linear model
+        newdata = data.frame(age=70))
+```
+Sequence the space: 
+
+```{r}
+pred.tree <- predict(pruneTree,                      
+                     newdata = data.frame(age=seq(40,90,1)))
+
+treePred<-data.frame(age=seq(40,90,1), 
+                     tree=pred.tree)
+
+ggplot( bmd.data, aes(x=age, y=bmd))+
+  geom_point()+
+  geom_vline(xintercept=c(71, 84, 85, 45, 54, 53, 63, 69, 70), 
+             color="blue", lty=2)+
+  geom_line(data=treePred,aes(x=age, y=tree), 
+            color="red", lwd=2)+
+  theme_bw()
+
+```
+
+Compare LM to Tree: 
+
+```{r}
+pred.lm   <-predict(lmMod,                          
+                    newdata = data.frame(age=seq(40,90,1)))
+
+treeDF<-data.frame(age=seq(40,90,1), 
+                   tree=pred.tree, 
+                   lm=pred.lm)%>%
+  gather(type, y, -age)
+
+ggplot(treeDF, aes(x=age, y=y, color=type))+
+  geom_point()+
+  geom_line()
+```
+
+### Caret
+
+The `caret` package (short for Classification And REgression Training) is a popular machine learning library that streamlines and standardizes output for fitting machine learning methods and performs cross-validation. 
+
+#### Tree 
+
+Fit a model for `bmd` with `age`, `sex`, and `bmi`.
+
+```{r}
+#install.packages("caret")
+library(caret)
+
+trctrl <- trainControl(### YOUR CODE HERE ##)
+
+caretTree  <-  train(### YOUR CODE HERE ##
+                    data = ### YOUR CODE HERE ##
+                    method = "rpart",
+                    trControl=trctrl,
+                    tuneGrid = expand.grid(cp=seq(0.001, 0.1, 0.001))
+)
+
+#Plot the RMSE versus the CP
+plot(caretTree)
+
+#Plot the tree with the optimal CP
+rpart.plot(caretTree$finalModel)
+
+caretTree$finalModel$cptable
+```
+
+#### LM
+
+```{r}
+trctrl <- trainControl(### YOUR CODE HERE ##)
+
+caretLM<-  train(### YOUR CODE HERE ##
+                   ### YOUR CODE HERE ##
+                   method = "lm",
+                   trControl=trctrl
+)
+
+summary(caretLM)
+```
+
+#### Compare
+
+```{r}
+caretLM$results
+
+#extracts the row with the RMSE and R2 from the table of results
+#corresponding to the cp with lowest RMSE  (best tune)
+caretTree$results[caretTree$results$cp==caretTree$bestTune[1,1], ]
+```
+

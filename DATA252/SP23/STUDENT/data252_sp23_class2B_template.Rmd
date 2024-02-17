@@ -1,0 +1,295 @@
+---
+title: 'DATA252: Review of Simple Linear Regression'
+author: "Kitada Smalley"
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+## Learning Objectives
+
+In this lesson students will review the main concepts of Simple Linear Regression. 
+
+* How to fit a model
+* Graphics a model
+* Checking model fit and diagnostics
+* Model inference
+
+### Import the Data
+
+These laptop price data come from Kaggle. 
+
+```{r warning=FALSE, message=FALSE}
+### use raw file from github
+laptop_price <- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/laptop_price.csv")
+
+```
+
+
+### Step Zero: Wrangle Data
+
+```{r warning=FALSE, message=FALSE}
+## TIDYVERSE
+#install.packages("tidyverse")
+library(tidyverse)
+
+### convert to dollars
+laptop_price<-laptop_price%>%
+  mutate(Price_dollar=Price_euros*1.09)
+
+# TAKE OFF LABELS for GB
+unique(laptop_price$Ram)
+
+#str_remove()
+laptop_price$Ram_GB<-str_remove(laptop_price$Ram, "GB")
+laptop_price$Ram_GB<-as.numeric(laptop_price$Ram_GB)
+unique(laptop_price$Ram_GB)
+```
+
+### Step One: Look at the Data
+
+* Explanatory (X): RAM in GB
+* Repsonse (Y): Price in Dollars
+
+#### Make a Scatterplot
+
+```{r}
+# SCATTERPLOT
+## YOUR CODE HERE ##
+
+# JITTER ADDS NOISE
+## YOUR CODE HERE ##
+```
+
+### Step Two: Assume a Model Form 
+
+#### Non-Parametric 
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+#### Parametric 
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+We're going to go with a simple linear model
+
+## Fitting A Simple Linear Regression (SLR) Model 
+
+This model has the form: 
+$$Y_i=\beta_0+\beta_1 x_i +\varepsilon_i$$
+
+This might look familar to $Y=mx+b$, which was called slope-intercept form.
+
+### Step Three: Estimate Model Coefficients 
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+We can estimate the parameters: 
+
+* Y-intercept: $\hat{\beta}_0 = 291.57$
+* Slope: $\hat{\beta}_1 = 111.34$
+
+### Step Four: Error Estimation 
+
+#### Standard Errors
+We can estimate the error associated estimating these parameters: 
+* Standard Error for Y-intercept: $SE(\hat{\beta}_0) = 27.26$
+* Standard Error for Slope: $SE(\hat{\beta}_1) = 2.78$
+
+#### Estimating the variance, $\sigma^2$
+
+We can estimate the $\sigma^2$ with $s^2$: 
+$$s^2=\frac{1}{n-2}\sum_{i=1}^n(Y_i-\hat{Y}_i)^2$$
+
+
+The quantity $s^2$ is called the **mean squared error (MSE)**.  
+
+The denominator $n-2$ is referred to as the residual regrees of freedom.
+
+Rather than $s^2$ we often use $s$: 
+$$s=\sqrt{\frac{1}{n-2}\sum_{i=1}^n(Y_i-\hat{Y}_i)^2}$$
+
+We can find this value in the R output, but we can also check it: 
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+## Assessing Model Assumptions
+
+We assume that the $x_i$'s are non-random (or observable with negligible error) and that the $\epsilon_i$'s are random such that 
+* $E[\epsilon_i]=0$ (mean 0)
+* $Var[\epsilon_i]=\sigma^2$ for all $i=1, ..., n$ (homogeneity)
+* $Cor(x_i, x_j)= 0 $
+𝐶𝑜𝑟(𝑥_𝑖, 𝑥_𝑗 )=0,for all $i \neq j$ (uncorrelated, but does not necessarily imply independence)
+
+### Tools for assessment: 
+
+* Residual Plot 
+* QQ (Quantile-Quantile) Plot 
+* Leverage vs Residual Plot 
+
+#### Residual Plot from Scratch
+```{r}
+## YOUR CODE HERE ##
+```
+
+#### QQ Plot from Scratch
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+#### Plot Function
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+
+### Remove the Outlier
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+
+## Inference
+
+
+### Step Five: Hypothesis Testing for Parameters
+
+#### Hypothesis Testing for Slope 
+
+##### Hypotheses: 
+
+* Null Hypothesis: $H_0: \beta_1 = 0$ 
+* Alternative Hypothesis: 
++ $H_A: \beta_1 \neq 0$ (two-sided)
++ $H_A: \beta_1 > 0$ (one-sided upper)
++ $H_A: \beta_1 < 0$ (one-sided lower)
+
+##### Test Statistic: 
+
+$$t=\frac{\hat{\beta}_1}{SE({\hat{\beta}_1})}$$
+
+where 
+$$SE(\hat{\beta}_1)=\sqrt{\frac{s^2}{\sum_{i=1}^n (x_i-\bar{x})^2}}$$
+
+##### Reference Distribution:
+
+T-distribution with $n-2$ degrees of freedom. 
+
+##### P-value: 
+```{r}
+## YOUR CODE HERE ##
+```
+
+### Step Six: Confidence Interval for Parameters
+
+Confidence intervals take the form 
+
+$$\text{Point Estimate} \pm \text{Critical Value} \times \text{Standard Error}$$
+
+#### Confidence Interval for Slope 
+
+$$\hat{\beta}_1 \pm t_{df=n-2, \alpha/2} \times \sqrt{\frac{s^2}{\sum_{i=1}^n (x_i-\bar{x})^2}}$$
+
+##### Point Estiamte: $\hat{\beta}_1$
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+
+##### Critical Value: $t_{df=n-2, \alpha/2}$
+
+We define the significance level $\alpha$, therefore we need to find the $1-\alpha/2$ quantile.  Typically, the default significance level used is $\alpha=0.05$, thus the percentile we look for is $97.5%$. 
+
+Recall that the degrees of freedom are $n-2$.
+
+```{r}
+qt(0.975, df=1302-2)
+```
+
+##### Standard Error: $SE(\hat{\beta}_1)=\sqrt{\frac{s^2}{\sum_{i=1}^n (x_i-\bar{x})^2}}$
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+
+#### Pull this all together: 
+```{r}
+## YOUR CODE HERE ##
+```
+
+We can check this with the confint function in R: 
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+
+### Step Seven: Confidence and Prediction Intervals for an Observation 
+
+#### Using the Model for Prediction 
+```{r}
+## YOUR CODE HERE ##
+```
+
+#### Confidence Interval for a mean response
+```{r}
+## YOUR CODE HERE ##
+```
+
+#### Prediction Interval for a new response 
+```{r}
+## YOUR CODE HERE ##
+```
+
+#### Adding Confidence and Prediction Bands
+```{}
+confBand<-predict(mod2, interval="confidence")
+predBand<-predict(mod2, interval="predict")
+
+colnames(predBand)<-c("fit2", "lwr2", "upr2")
+
+
+newDF<-cbind(laptop_price_wo, confBand, predBand)
+
+ggplot(newDF, aes(x=Ram_GB, y=Price_dollar))+
+  geom_point(alpha=.3)+
+  geom_abline(slope=mod2$coefficients[2], intercept=mod2$coefficients[1],
+              color="blue", lty=2, lwd=1)+
+  geom_line(aes(y=lwr), color="green", lty=2, lwd=1)+
+  geom_line(aes(y=upr), color="green", lty=2, lwd=1)+
+  geom_line(aes(y=lwr2), color="red", lty=2, lwd=1)+
+  geom_line(aes(y=upr2), color="red", lty=2, lwd=1)+
+  theme_bw()
+```
+
+### Step Eight and Nine: Analysis of Variance
+
+```{r}
+anova(mod2)
+```
+
+
+
+
+
+
+

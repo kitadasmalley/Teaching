@@ -1,0 +1,475 @@
+---
+title: 'DATA252: Multiple Linear Regression'
+author: "Kitada Smalley"
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+## Learning Objectives
+
+In this lesson students will learn how to...
+
+* Fit a multiple linear regression model
+* Create graphics to explore relationships between two variables
+* Engineer features 
+
+## 0. Import the Data
+
+These data for `insurance' charges come from the "US Health Insurance Dataset" on Kaggle. 
+
+Souce: 
+<https://www.kaggle.com/datasets/teertha/ushealthinsurancedataset>
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+### use raw file from github
+insurance_all<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/insurance.csv", 
+                    stringsAsFactors = TRUE)
+
+```
+
+Let's start by looking at the relationships between these variables.
+
+We will use the `GGally` package because it makes beautiful graphics. 
+
+```{r warning=FALSE, message=FALSE}
+#install.packages("GGally")
+library(GGally)
+
+ggpairs(## YOUR CODE HERE##)
+```
+
+We should partition the data into testing and training sets: 
+
+```{r}
+dim(insurance_all) # 1338
+
+set.seed(123)
+### Let's do a 70-30 split
+
+trainInd<-## YOUR CODE HERE##
+
+insurance<-## YOUR CODE HERE##
+insurance_test<-## YOUR CODE HERE##
+
+```
+
+#### Questions:
+
+* What variables are contained in these data?
+* Which variable might you use as the outcome/response?
+* Which variable(s) might you use as the features/explanatory?
+
+```{r}
+str(insurance)
+```
+## I. Simple Linear Regression 
+
+#### 1. Plot the data
+
+Our first task is to create a scatterplot of `charges` and `bmi` (body mass index).
+
+```{r}
+### Charges vs BMI
+
+## YOUR CODE HERE##
+```
+
+#### Question: 
+
+* How would you describe this scatterplot?  
+
+  * Direction 
+  * Form
+  * Strength 
+  * Outliers
+  
+#### 2. Fit a Simple Linear Model 
+
+Add a `geom_smooth()` using the linear model method. 
+
+```{r}
+### Add a geom_smooth
+
+## YOUR CODE HERE##
+```
+
+To find the equation for the line use the `lm()` function. 
+
+```{r}
+mod1<-## YOUR CODE HERE##
+summary(mod1)
+```
+
+#### Question: 
+
+* Does it appear that the relationship between `charges` and `bmi` is significant?  Why or why not?
+
+
+#### 3. Check the Diagnostics
+
+Using the `plot` function we can quickly generate diagnostics to assess our model assumptions. 
+
+```{r}
+plot(mod1)
+```
+
+#### Questions: 
+
+* What do you observe? 
+
+It appears that there are two groups within these data.  Let's explore that further. 
+
+## II. Parallel Lines
+
+$$Y_i=\beta_0+\beta_1 X_i+\beta_2 Z_i$$
+In the parallel lines model, 
+
+$Z_i$ is an indicator that takes that values 0 or 1. 
+
+When
+
+* $Zi=0$ then $Y_i=\beta_0+\beta_1 X_i$
+* $Zi=1$ then $Y_i=(\beta_0+\beta_2)+\beta_1 X_i$
+
+It might be reasonable consider `smoker` status in our model in addition to `bmi`.  Smoking status is a categorical variable. 
+
+### 1. Plot the data
+
+```{r}
+### Charges vs BMI (color with SMOKER)
+## YOUR CODE HERE##
+```
+
+#### Questions: 
+
+* What are your observations?
+* How can we incorporate these into our model?
+
+### 2. Fit a model
+
+Let's add a main effect for `smoker`.  
+
+```{r}
+### ADD another variable with a +
+mod2<-## YOUR CODE HERE##
+summary(mod2)
+```
+When you look at this output you'll see `smokeryes`.  This represents the variable `smoker` and the level of the factor `yes`.  Note in this case `no` is used as the reference group.  Factor variables create binary indicators in R.  
+
+```{r}
+contrasts(insurance$smoker)
+```
+
+The estimate associated with `smokeryes` is how much, on average, charges differ from an individual who does not smoke, while all other variables are held constant. 
+
+Let's look at those coefficients again: 
+```{r}
+mod2$coefficients
+```
+
+
+#### Questions: 
+
+* Is the effect of `smoker` significant?
+
+### 3. Visualize the Model
+
+```{r}
+### Parallel Lines
+## YOUR CODE HERE##
+```
+
+#### Questions: 
+
+* What are your observations?
+* Would to make changes to this model?
+
+## III. Interactions
+
+$$Y_i=\beta_0+\beta_1 X_i+\beta_2 Z_i+\beta_3 X_i \times Z_i$$
+In the parallel lines model, 
+
+$Z_i$ is an indicator that takes that values 0 or 1. 
+
+When
+
+* $Zi=0$ then $Y_i=\beta_0+\beta_1 X_i$
+* $Zi=1$ then $Y_i=(\beta_0+\beta_2)+(\beta_1+\beta_3) X_i$
+
+You might notice that the restriction to parallel lines does not accurately reflect the relationship for the smoker group. 
+
+### 1. Make a Plot
+
+We can use `color` as a grouping variable that is used to partition these data. 
+
+```{r}
+### Charges vs BMI (color with SMOKER)
+## YOUR CODE HERE##
+```
+Note that when we partition the data in this way, it performs two separate linear models. 
+
+### 2. Fit a model
+
+We can model these groups simultaneously to decrease the error overall. 
+
+Use a `*` to get all main effects and subsequent interactions. 
+
+```{r}
+## * for interactions
+mod3<-## YOUR CODE HERE##
+summary(mod3)
+```
+
+Looking at the output you'll see `bmi:smokeryes`.  This is known as the interaction.  An interaction communicates that the relationship between the response and an explanatory variable changes at different levels of a factor.  This causes in change in both the intercept and the slope. 
+
+```{r}
+## Look at the coefficient vector
+mod3$coefficients
+
+## Reference
+yint_0<-## YOUR CODE HERE##
+slope_0<-## YOUR CODE HERE##
+
+## Alternative
+yint_1<-## YOUR CODE HERE##
+slope_1<-## YOUR CODE HERE##
+```
+### 3. Visualize the model
+
+```{r}
+### Parallel Lines
+ggplot(data=insurance, aes(x=bmi, y=charges, color=smoker))+
+  geom_point()+
+  geom_abline(intercept=yint_1, 
+              slope=slope_1, color="blue")+
+  geom_abline(intercept=yint_0, 
+              slope=slope_0, color="red")
+```
+
+## IV. Fitting Planes
+
+Suppose now that we have two numeric features (explanatory variables) how would we graph that?
+
+We would need to add a dimension. 
+
+There are several packages that can be used to create a 3D scatterplot: 
+
+* `scatterplot3d`: <http://www.sthda.com/english/wiki/scatterplot3d-3d-graphics-r-software-and-data-visualization>
+* `rgl`: <https://rpubs.com/aagarwal29/179912#:~:text=To%20create%20a%203%2DD,%2C%20y%2C%20and%20z%20coordinates.&text=You%20can%20click%20on%20the%20plot%20and%20drag%20it%20to%20rotate%20it.>
+
+  * Another good source: <https://r-graph-gallery.com/3d_scatter_plot.html>
+
+* `scatter3d` in the `car` package: <http://www.sthda.com/english/wiki/amazing-interactive-3d-scatter-plots-r-software-and-data-visualization>
+* 'plot3D'
+
+### 1. Make a Plot
+
+```{r message=FALSE, warning=FALSE}
+## SCATTERPLOT3D
+#install.packages("scatterplot3d") # Install
+library("scatterplot3d")
+
+s3d<-## YOUR CODE HERE##
+```
+
+2. Fit a Model
+
+$$Y_i=\beta_0+\beta_1 X_{i,1}+\beta_2 X_{i,2}$$
+In this MLR model we have two different slope coefficients.  The slope related to the first feature, $X_1$, is $\beta_1$ and the slope related to the second feature, $X_2$, is $\beta_2$.  
+
+We interpret these slopes, $\beta_j$ as the average amount of change in the response for a one unit change in the $X_j$ direction, on average. 
+
+```{r}
+mod4<-## YOUR CODE HERE##
+
+summary(mod4)
+```
+
+3.  Visualize the model 
+
+```{r}
+scatterplot3d(insurance$bmi, insurance$age, insurance$charges, pch=16)
+
+# Add regression plane
+s3d$plane3d(mod4)
+```
+Her's another example
+
+```{r}
+#install.packages(c("plot3D", "magrittr"))
+library(plot3D)
+library(magrittr)
+
+insurance%$%
+  scatter3D(bmi, age, charges, theta=30, phi=10)
+```
+
+
+### 4. BONUS: More Interactions
+
+```{r warning=FALSE, message=FALSE}
+mod5<-## YOUR CODE HERE##
+summary(mod5)
+
+#install.packages("rgl")
+library(rgl)
+library(car)
+
+scatter3d(charges~bmi*age*as.factor(smoker), data=insurance)
+
+# Print the html graphic
+ rglwidget(width = 520, height = 520)
+                        
+```
+
+## V. Feature Engineering
+
+### 1. The Kitchen Sink
+
+There are more variables to play with in these data: 
+
+```{r}
+str(insurance)
+```
+
+
+### 2. Fit a Model
+
+```{r}
+mod6<-## YOUR CODE HERE##
+summary(mod6)
+```
+
+#### Questions: 
+
+* How do we interpret the `region` estimates?
+  * What is the reference group?
+  
+* Looking at the pairs plot what are your observations?  Do the relationships meet our LM assumptions?
+
+
+### 3. Mutate! 
+
+Feature engineering is the process of selecting, manipulating, and transforming raw data into features that can be used in supervised learning. In order to make machine learning work well on new tasks, it might be necessary to design and train better features. 
+
+<https://towardsdatascience.com/what-is-feature-engineering-importance-tools-and-techniques-for-machine-learning-2080b0269f10>
+
+You might have made the following observations: 
+* There looks to be some curvature in the relationship between `age` and `charges`
+* Perhaps charges are different for patients that are defined as obese (BMI > 30)
+* It stands to reason that the having both traits of smoking and being obese could have even worse effects. 
+
+Let's create new variables to help accomplish these: 
+
+```{r}
+insurance<-insurance %>%
+  mutate(## YOUR CODE HERE##)
+```
+
+### 4. Fitting the Model with New Features
+
+```{r}
+mod7<-## YOUR CODE HERE##
+summary(mod7)
+```
+
+## VI. Comparing the models
+
+What metrics can we use for model comparison: 
+```{r}
+library(broom)
+
+## COMPARE MODEL 1 and MODEL 7
+mod1%>%
+  glance()
+
+mod7%>%
+  glance()
+```
+
+Recall that $\sigma$ is estimated with $s$, where
+$$s=\sqrt{\frac{1}{n-p-1}\sum_{i=1}^n(\hat{y}_i-y_i)^2}$$
+
+Metrics from the training set: 
+
+```{r}
+## MODEL 1: charges~bmi
+train1<-sigma(mod1)
+train1
+
+## MODEL 2: charges~bmi+smoker
+train2<-sigma(mod2)
+train2
+
+## MODEL 3: charges~bmi*smoker
+train3<-sigma(mod3)
+train3
+
+## MODEL 4: charges~bmi+age
+train4<-sigma(mod4)
+train4
+
+## MODEL 5: charges~bmi*smoker*age
+train5<-sigma(mod5)
+train5
+
+## MODEL 6: (Kitchen Sink) charges~age+children+bmi+sex+smoker+region
+train6<-sigma(mod6)
+train6
+
+## MODEL 7: (NEW Features) charges~age+age2+children+bmi+sex+bmi30*smoker+region
+train7<-sigma(mod7)
+train7
+
+```
+Let's look at the test performance by assessing the root mean squared error: 
+$$RMSE=\sqrt{\frac{1}{n}\sum_{i=1}^n(\hat{y}_i-y_i)^2}$$
+
+```{r}
+#install.packages("caret")
+library(caret)
+
+## MOD 1
+testPred1<-predict(mod1, insurance_test)
+RMSE(testPred1, insurance_test$charges)
+
+## MOD 2
+testPred2<-predict(mod2, insurance_test)
+RMSE(testPred2, insurance_test$charges)
+
+## MOD 3
+testPred3<-predict(mod3, insurance_test)
+RMSE(testPred3, insurance_test$charges)
+
+## MOD 4
+testPred4<-predict(mod4, insurance_test)
+RMSE(testPred4, insurance_test$charges)
+
+## MOD 5
+testPred5<-predict(mod5, insurance_test)
+RMSE(testPred5, insurance_test$charges)
+
+## MOD 6
+testPred6<-predict(mod6, insurance_test)
+RMSE(testPred6, insurance_test$charges)
+
+## MOD 7
+insurance_test<-insurance_test%>%
+    mutate(bmi30=(bmi>=30), 
+         age2=age^2)
+
+testPred7<-predict(mod7, insurance_test)
+RMSE(testPred7, insurance_test$charges)
+```
+
+
+

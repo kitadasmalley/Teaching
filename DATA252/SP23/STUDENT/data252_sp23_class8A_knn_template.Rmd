@@ -1,0 +1,455 @@
+---
+title: 'DATA252: K-Nearest Neighbors'
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+## Learning Objectives
+
+In this lesson students will learn ...
+
+* How to implement the K-nearest neighbors (knn) algorithm
+* Produce stratified training and testing sets
+* The importance of standardizing data
+* How to tune the knn algorithm to pick the best value of $k$ hyperparameter
+
+## BINARY CASE
+
+### Example 1: Pima Indigenous People
+
+Motivation/Background: 
+
+* "The Pima Indians of Arizona have the highest reported prevalences of obesity and non-insulin-dependent diabetes mellitus (NIDDM). In parallel with abrupt changes in lifestyle, these prevalences in Arizona Pimas have increased to epidemic proportions during the past decades." (Ravussin et al. 1994)
+* "This study provides compelling evidence that changes in lifestyle associated with Westernization play a major role in the global epidemic of type 2 diabetes." (Schultz et al. 2006)
+
+Sources: 
+
+* https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8943493/
+* https://diabetesjournals.org/care/article/17/9/1067/17885/Effects-of-a-Traditional-Lifestyle-on-Obesity-in
+* https://diabetesjournals.org/care/article/29/8/1866/28611/Effects-of-Traditional-and-Western-Environments-on
+
+#### Step 1: Import the Data
+
+```{r}
+pima<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/diabetes.csv", 
+               header=TRUE)
+
+str(pima)
+```
+##### Questions
+
+* What type of variable is the response?
+* What might be good explanatory variables based on our previous knowledge?
+
+
+#### Step 2: Exploration
+
+Our goal in this step is to find feature variables that best separates the two groups (0 = diabetes negative; 1 = diabetes positive).  
+
+We might want to use side-by-side boxplot or overlapping density plots.
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+### YOUR CODE HERE ###
+```
+
+#### Step 3: Why Not Linear?
+
+We want to explore relationships between whether or not an individual has diabetes, which is contained in the `Outcome` variable, and other feature variables.  
+
+We've made a lot of scatterplot thus far.  How about we try that?
+
+```{r}
+### YOUR CODE HERE ###
+```
+That didn't work out so well.  
+
+##### Questions
+
+* What was the problem? 
+* What might be some problems with trying to fit a traditional linear model to these data?
+
+## K-Nearest Neighbors (KNN)
+
+In the previous problem we encountered issues because we were treating `Outcome` as a number when it should have been treated as a categorical variable (or factor).
+
+KNN is a popular, non-parametric, "lazy" machine learning approach.  Predictions are built off defining a neighborhood of $k$ close neighbors, where closeness is defined by a pre-specified distance metric.  Thus, $k$ is considered a hyperparameter than can be tuned to choose the appropriate model flexibility, whilst considering the bias and variance trade-off.  
+
+#### Step 4: Scaling
+
+Look at the summary of our data
+
+```{r}
+### YOUR CODE HERE ###
+```
+
+
+Calculating distance is central to this algorithm.  Therefore, if features have values with large difference in ranges or units, this can highly influence the model.  Therefore, we should pre-process the data first.
+
+Consider the following methods: 
+
+* Min-Max Scaling: Scales to range [0,1]
+
+$$X_{sc}=\frac{X-X_{min}}{X_{max}-X_{min}}$$
+
+* Standardization (Z-score Scaling)
+
+$$Z=\frac{X-\bar{X}}{SD(X)}$$
+```{r}
+##### scale
+#Normalization
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x))) }
+
+## REMOVE NAs FIRST
+pima<-na.omit(pima)
+
+pimaNorm <- as.data.frame(lapply(pima[,1:8], normalize))%>%
+  cbind(Outcome=pima$Outcome)
+
+head(pimaNorm)
+```
+
+#### Step 5A: Training and Testing
+
+Let's make a 70-30 split for training and testing out model.
+
+```{r}
+768*.7
+
+set.seed(999)
+sampleInd<-### YOUR CODE HERE ###
+train<-pimaNorm[sampleInd,]
+test<-pimaNorm[-sampleInd,]
+
+## What proportion people in the training and testing sets have diabetes
+mean(train$Outcome)
+mean(test$Outcome)
+```
+
+Wow!  There is a 10% difference!  We want to have the same proportion of diabetes in the training set as the testing set because it is important that our training data is representative. 
+
+Let's look at that
+
+```{r}
+#### VISUALIZE THIS
+pima2<-pimaNorm%>%
+  mutate(train=FALSE)
+
+pima2$train[sampleInd]<-TRUE
+
+ggplot(data=pima2, aes(x=Glucose, y=BloodPressure, color=factor(Outcome)))+
+  geom_point()+
+  facet_grid(.~train)
+```
+
+#### Step 5B: Stratified Splitting
+
+##### From Scratch
+First, we will build it from scratch by using basic tools in `dplyr`.
+
+```{r}
+### INSTEAD we want the same prop
+
+## PARTITION DATA
+pima0<-pimaNorm%>%
+  filter(Outcome==0)
+dim(pima0)
+
+pima1<-pimaNorm%>%
+  filter(Outcome==1)
+dim(pima1)
+
+## SAMPLE INDECES
+sample0<-### YOUR CODE HERE ###
+sample1<-### YOUR CODE HERE ###
+
+## TRAINING AND TESTING SETS
+trainStrat<-rbind(pima0[sample0, ],
+                  pima1[sample1, ])
+
+testStrat<-rbind(pima0[-sample0, ],
+                  pima1[-sample1, ])
+
+## PROPORITON OF OUTCOME
+mean(trainStrat$Outcome)
+mean(testStrat$Outcome)
+```
+##### Caret (Automated)
+
+```{r warning=FALSE, message=FALSE}
+library(caret)
+# Split the data into training and test set
+set.seed(314)
+caretSamp <- createDataPartition(### YOUR CODE HERE ###
+
+## SPLIT TESTING AND TRAINING
+trainCaret  <- pimaNorm[caretSamp, ]
+testCaret <- pimaNorm[-caretSamp, ]
+
+## PROPORITON OF OUTCOME
+mean(trainCaret$Outcome)
+mean(testCaret$Outcome)
+```
+
+#### Step 6: Prediction with KNN
+
+The `knn` function is within the `class` package.  Take a moment to read the documentation. 
+
+```{r warning=FALSE, message=FALSE}
+library(class)
+help(knn)
+```
+
+We will need to specify four arguments: 
+
+* `train`	: matrix or data frame of training set cases.
+* `test`	: matrix or data frame of test set cases. A vector will be interpreted as a row vector for a single case.
+* `cl`	: factor of true classifications of training set
+* `k`	: number of neighbours considered.
+
+Let's specify the arguments
+
+```{r}
+#### look at knn function
+## need train, test, cl, and k
+
+trainFea<-### YOUR CODE HERE ###
+
+testFea<-### YOUR CODE HERE ###
+
+trainOut<-### YOUR CODE HERE ###
+testOut<-### YOUR CODE HERE ###
+```
+
+Now to implement the algorithm.  If there is a "tie" in closeness to the datapoint in question, that tie will be split randomly.
+
+```{r}
+set.seed(1)
+knn.pred=knn(### YOUR CODE HERE ###
+
+head(knn.pred)
+```
+
+#### Step 7: Confusion Matrix
+
+We assess model fit for classification models with the confusion matrix.  This illustrates the concordance (diagonal) and discordance (off-diagonal) between our predictions and test data. 
+
+```{r}
+#Confusion matrix
+cm<-table(### YOUR CODE HERE ###
+cm
+```
+Thus the correct prediction rate can be calculated using concordance:
+
+```{r}
+### correct rate
+### YOUR CODE HERE ###
+```
+
+And the error is the complement
+
+```{r}
+### error rate
+### YOUR CODE HERE ###
+
+## OR
+### YOUR CODE HERE ###
+```
+
+Other popular metrics include sensitivity and specificity: 
+* Sensitivity = True Positive / (True Positive + False Negative)
+* Specificity = True Negative / (False Positive + True Negative)
+
+##### Questions
+
+* Calculate the sensitivity and specificity for the knn confusion matrix above.
+
+#### Step 8: Choosing $k$
+
+Low values of $k$ result is too wiggly (overfitting) models that are influenced by noise (high variance).  On the other hand, high values of $k$ are response enough (underfitting) and result in biased models.  We can use a grid search to find the best value of $k$.
+
+```{r}
+## Whats the best k
+## Pick a neighborhood
+set.seed(123)
+error <- c()
+for (i in 1:30){
+  knnPima<- knn(train = trainFea,
+                test = testFea,
+                cl = trainOut, 
+                k = i)
+  error[i] = 1- mean(knnPima==testOut)
+}
+
+ggplot(data = data.frame(error), aes(x = 1:30, y = error)) +
+  geom_line(color = "Blue")+
+  xlab("Neighborhood Size")
+
+which.min(error)
+
+## best pred...
+knn.pred12=knn(train = trainFea,
+              test = testFea,
+              cl = trainOut,
+              k=12)
+
+#Confusion matrix
+cm12<-table(knn.pred12,testOut)
+
+mean(knn.pred12==testOut)
+
+```
+### Caret Method
+
+Caret is a useful tool that standardizes model fitting syntax; however, its a blackbox.
+
+```{r}
+### THE CARET METHOD CARET
+set.seed(314)
+model <- train(
+  factor(Outcome) ~., 
+  data = trainCaret , 
+  method = "knn",
+  trControl = trainControl("cv", number = 10),
+  preProcess = c("range"),
+  tuneLength = 20
+)
+# Plot model accuracy vs different values of k
+plot(model)
+
+# Print the best tuning parameter k that
+# maximizes model accuracy
+model$bestTune
+
+predicted.classes <- model %>% predict(testCaret)
+head(predicted.classes)
+
+# Compute model accuracy rate
+cmCaret<-table(predicted.classes ,testOut)
+cmCaret
+
+### THE CARET WAY!
+confusionMatrix(cmCaret)
+```
+## MULTIPLE CLASSES
+
+### Example #2: Iris Species
+
+The `iris` dataset is a popular dataset used for statistical examples.  The documentation for this dataset in R states: 
+
+This famous (Fisher's or Anderson's) iris data set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa, versicolor, and virginica.
+
+Our goal is to be able to predict the species of an unknown iris flower, given measurements for four physical characteristics. 
+
+```{r}
+head(iris)
+```
+
+#### Step 1: Standardize the data 
+
+Since we are using a distance metric to assess closeness of neighbors, it is essential to standardize our data. 
+
+```{r}
+# unstandardized 
+var(iris[ ,1])
+var(iris[ ,2])
+
+# use scale to standardize
+irisS<-iris
+irisS[,1:4] <-scale(irisS[,1:4])
+irisS<-data.frame(irisS)
+
+# now check the standardized variance
+var(irisS[ ,1])
+var(irisS[ ,2])
+```
+
+#### Step 2: Visualize the Data
+
+Looking at the data do there appear to be any clear groupings? 
+
+```{r}
+### Are there groups?
+library(GGally)
+### YOUR CODE HERE ###
+
+## explore
+library(tidyverse)
+### YOUR CODE HERE ###
+```
+
+#### Step 3: Train and Test
+
+We want to make sure that we have balanced representation in the training and testing sets. 
+
+```{r}
+### train and test
+set.seed(239)
+
+### SEPARATE INTO DIFFERENT SPECIES
+
+setosa<- ### YOUR CODE HERE ###
+
+versicolor<- ### YOUR CODE HERE ###
+
+virginica<- ### YOUR CODE HERE ###
+
+# 50 observations from each
+# Take 60% to train (30) and 40% to test (20)
+train <- sample### YOUR CODE HERE ###
+
+iris.train<- rbind(setosa[train,], versicolor[train,], virginica[train,])
+iris.test<- rbind(setosa[-train,], versicolor[-train,], virginica[-train,])
+```
+
+#### Step 4: Fit KNN
+
+```{r}
+library(class)
+knnIris<- knn(### YOUR CODE HERE ###
+
+## correct
+### YOUR CODE HERE ###
+
+## error
+### YOUR CODE HERE ###
+```
+
+#### Step 5: Cross Validation to find k
+
+```{r}
+## Pick a neighborhood
+error <- c()
+for (i in 1:15)
+{
+  knnIris<- knn(train = iris.train[,1:4], test = iris.test[,1:4], cl = iris.train$Species, k = i)
+  error[i] = 1- mean(knnIris == iris.test$Species)
+}
+
+ggplot(data = data.frame(error), aes(x = 1:15, y = error)) +
+  geom_line(color = "Blue")+
+  xlab("Neighborhood Size")
+```
+
+#### Step 6: Prediction for the best k
+
+```{r}
+iris_pred <- knn(train = iris.train[,1:4], 
+                 test = iris.test[,1:4], 
+                 cl = iris.train$Species, 
+                 k=3)
+
+table(iris.test$Species, iris_pred)
+```
+
+
+
