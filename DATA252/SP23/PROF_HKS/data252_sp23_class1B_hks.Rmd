@@ -1,0 +1,350 @@
+---
+title: 'DATA252: Modeling Process'
+author: "Kitada Smalley"
+output:
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+Students will learn how to use R to generate random variables and become acquainted with the trade-offs inherent in models building.
+
+
+### Generating Random Variables
+
+#### Normal Distribution
+```{r}
+## using functions built into R
+## generating random variables 
+?rnorm()
+
+## parameters
+# mean
+mu<-0
+# sd
+sigma<-1
+## arguments
+# n
+rnorm(n=50, mean=0, sd=1)
+
+## woah thats a lot... 
+
+## we should store it as a variable
+a<-rnorm(n=100, mean=0, sd=1)
+```
+
+#### Histogram
+
+```{r}
+## can we look at this?
+hist(a)
+```
+
+#### Sample Statistics and Bias
+
+```{r}
+## sample statistics
+mean(a)
+sd(a)
+
+## bias = difference between observed and expected
+mean(a)-mu
+
+```
+
+#### Reproducibility 
+
+Notice that when we use a random generator in R we get different results each time we run the code.  If we want our results to be reproducible we should set a seed.  
+
+```{r}
+set.seed(314)
+b<-rnorm(n=100, mean=0, sd=1)
+head(b)
+```
+
+
+### Regression Models
+
+Broadly, the class the models that are used to predict relationships with numeric outputs are known as regression models.
+
+#### Calling in the mystery data
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+
+this_df<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA252/main/Data/class1B.csv")
+
+## TRAINING SET
+train_dat<-this_df%>%
+  filter(test==FALSE)
+
+## TESTING SET
+test_dat<-this_df%>%
+  filter(test==TRUE)
+```
+
+#### What is the relationship between x and y?
+
+```{r warning=FALSE, message=FALSE}
+ggplot(train_dat, aes(x, y))+
+  geom_point(size=3)+
+  theme_bw()+
+  coord_fixed()
+```
+
+Sketch a modelby hand.  What would it look like?  What would be your strategy?
+
+##### Strategy #1: Simple Line
+
+```{r warning=FALSE, message=FALSE}
+ggplot(train_dat, aes(x, y))+
+  geom_point(size=3)+
+  geom_smooth(method="lm", se=FALSE)+
+  theme_bw()+
+  coord_fixed()
+```
+
+##### Strategy #2: Minimize Error
+
+```{r warning=FALSE, message=FALSE}
+ggplot(train_dat, aes(x, y))+
+  geom_point(size=3)+
+  geom_smooth(se=FALSE, span=.2)+
+  theme_bw()+
+  coord_fixed()
+```
+
+#### Loss Functions
+
+The fit of a model is determined by the error between what is observed and what the fitted model expected.  We refer to this difference as the residual.  
+
+
+
+```{r warning=FALSE, message=FALSE}
+## LINEAR MODEL
+lm_mod<-lm(y~x, data=train_dat)
+lm_pred<-predict(lm_mod)
+
+## FORMAT DATA FOR PLOT
+lm_dat<-train_dat%>%
+  cbind(lm_pred)%>%
+  gather(key=y_type, value=ys, -c(x,test))
+
+## PLOT with Residuals
+ggplot(data=train_dat, aes(x, y))+
+  geom_point(size=3)+
+  geom_smooth(method="lm", se=FALSE)+
+  geom_line(data=lm_dat, aes(x, ys, group=x))+
+  theme_bw()+
+  coord_fixed()
+```
+
+
+#### Prediction
+
+When creating a model it is often our goal to use that model to predict future observations.  We can use the `predict()` function in R to get the point estimate for where we might expect to observe a new observation given the set of inputs.  
+
+##### Linear Residuals
+
+```{r warning=FALSE, message=FALSE}
+lm_mod<-lm(y~x, data=train_dat)
+lm_pred<-predict(lm_mod, test_dat)
+
+## FORMAT DATA FOR PLOT
+lm_dat<-test_dat%>%
+  cbind(lm_pred)%>%
+  gather(key=y_type, value=ys, -c(x,test))
+
+ggplot(train_dat, aes(x, y))+
+  geom_point(size=3)+
+  geom_smooth(method="lm", se=FALSE)+
+  geom_point(data=test_dat, aes(x, y), size=3, color="red")+
+  geom_line(data=lm_dat, aes(x, ys, group=x))+
+  theme_bw()+
+  coord_fixed()
+
+## TEST MSE
+mean((test_dat$y-lm_pred)^2)
+```
+
+
+##### LOESS Residuals
+
+```{r warning=FALSE, message=FALSE}
+## LOESS MODEL
+loess_mod<-loess(y~x, data=train_dat, span=.2)
+loess_pred<-predict(loess_mod, test_dat)
+
+## FORMAT DATA FOR PLOT
+loess_dat<-test_dat%>%
+  cbind(loess_pred)%>%
+  gather(key=y_type, value=ys, -c(x, test))
+
+## PLOT with Residuals
+ggplot(data=train_dat, aes(x, y))+
+  geom_point(size=3)+
+  geom_smooth(se=FALSE, span=0.2)+
+  geom_point(data=test_dat, aes(x, y), size=3, color="red")+
+  geom_line(data=loess_dat, aes(x, ys, group=x))+
+  theme_bw()+
+  coord_fixed()
+
+## TEST MSE
+mean((test_dat$y-loess_pred)^2)
+
+```
+
+### Bias vs Variance
+
+LOESS (locally estimated scatterplot smoothing) is a smoothing technique that uses data points close to the value in question to create a model.  When using LOESS we must specify how much data around a given point to use.  This is known as the span.  
+
+In the following code, we perform a grid search for the span to decide the appropriate amount of "wiggle" to give to the line.  
+
+In this simulation we use 5 different random splits (rows) to show how the models may look when fit to different data.  Note how different the resulting LOESS lines can be given different random splits. 
+
+Do you observe any patterns?
+
+```{r warning=FALSE, message=FALSE}
+span_seq<-seq(.2, 1, .2)
+
+plotlist<-list()
+
+for(j in 1:5){
+  that_df<-this_df%>%
+    select(x, y)%>%
+    mutate(test=FALSE)
+  
+  this_test_ind<-sample(1:19, 7)
+  that_df$test[this_test_ind]<-TRUE
+  
+  this_train_dat<-that_df[-this_test_ind,]
+  this_test_dat<-that_df[this_test_ind,]
+  
+for(i in 1:length(span_seq)){
+  p<-ggplot()+
+    geom_point(data=this_train_dat, aes(x, y))+
+    geom_point(data=this_test_dat, aes(x, y), color="gray")+
+    geom_smooth(data=this_train_dat, aes(x, y), se=FALSE, span=span_seq[i])+
+    theme_bw()+
+    coord_fixed()+
+    theme(axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.text.y =element_blank(),
+          axis.ticks.y=element_blank(),
+          plot.margin = rep(unit(0,"null"),4),
+          panel.spacing = unit(0,"null"),
+          axis.ticks.length = unit(0,"null"),
+          axis.ticks.margin = unit(0,"null")) 
+    #+
+    #ggtitle(paste("Split:", j, ", Span = ", span_seq[i]))+
+  
+  #print(p)
+  #p
+  plotlist <- c(plotlist, list(p))
+  
+  #ggsave(paste("split", j, "Span", i, ".pdf", sep=""), 
+  #        width=6, height=4)
+
+}
+}
+
+library(gridExtra)
+do.call(grid.arrange, c(plotlist, list(ncol = 5)))
+```
+
+### Testing and Training 
+
+If we only use the data that was used to fit the model to assess model fit, we will have an underestimation of how well the model will perform when when faced with new data.  Therefore, we split or data into training sets.  The training set it used to fit the model and the testing set it used as a proxy for new data.
+
+This process is called cross-validation.  Cross-validation can be used to protect against over or underfitting.  
+
+See if you can find the "Goldilocks Zone" in the plot below to pick the appropriate span for our LOESS model. 
+
+```{r warning=FALSE, message=FALSE}
+### DF
+split_lab<-c()
+span_lab<-c()
+train_mse<-c()
+test_mse<-c()
+
+
+for(j in 1:50){
+  set.seed(j*314)
+  
+  that_df<-this_df%>%
+    select(x, y)%>%
+    mutate(test=FALSE)
+  
+  this_test_ind<-sample(1:19, 7)
+  that_df$test[this_test_ind]<-TRUE
+  
+  this_train_dat<-that_df[-this_test_ind,]
+  this_test_dat<-that_df[this_test_ind,]
+  
+  for(i in 1:length(span_seq)){
+    
+    ### STORE
+    split_lab<-c(split_lab, j)
+    span_lab<-c(span_lab, span_seq[i])
+    
+    ## TRAIN MSE
+    thisLOESS<-loess(y ~ x, data=this_train_dat, span=span_seq[i])
+    trainMSE<-mean((thisLOESS$res)^2)
+    train_mse<-c(train_mse, trainMSE)
+    
+    ## TEST MSE
+    testPred<-predict(thisLOESS, this_test_dat)
+    testMSE<-mean((this_test_dat$y-testPred)^2)
+    test_mse<-c(test_mse, testMSE)
+  }
+}
+simDat<-data.frame(split_lab,
+                   span_lab,
+                   train_mse,
+                   test_mse)%>%
+  gather(key=mse_type, value=mse, -c(split_lab, span_lab))
+
+#View(simDat)
+
+##
+ggplot(simDat, aes(x=as.factor(span_lab), y=mse, fill=mse_type))+
+  #geom_point()+
+  geom_boxplot()
+```
+
+### The True Model
+
+```{r}
+## feature (vector)
+x<-seq(1, 20, 1)
+
+true<-1.5*sin(.7*x)+.5*x
+
+# outcome has some noise
+set.seed(3.14)
+y<-true+rnorm(n=length(x), sd=1)
+
+this_df<-data.frame(x, true, y)%>%
+  mutate(test=FALSE)
+
+# 1/3 test
+test_ind<-sample(1:19, 7)
+this_df$test[test_ind]<-TRUE
+
+train_dat<-this_df[-test_ind,]
+test_dat<-this_df[test_ind,]
+
+library(tidyverse)
+ggplot()+
+  geom_point(data=this_df, aes(x, y, color=test), size=3)+
+  geom_line(data=this_df, aes(x, true))+
+  theme_bw()+
+  coord_fixed()
+```
+
