@@ -1,0 +1,364 @@
+---
+title: 'Data Viz: Basic Graphics'
+author: "STUDENT NAME HERE"
+output: 
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    collapsed: no
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+### I. Basic Graphics
+
+We will be doing simplified reproductions of figures found in Storytelling with Data. When we learn more about ggplot we can personalize and polish our plots more.
+
+#### 1) Heatmapped Table
+
+To create a heatmapped table you might want to use the following packages: ztable or tidyverse.
+
+I had a lot of difficult with installing ztable. So I will recreate heatmapped tables using the tiling feature of ggplot2.
+
+##### Load the example data
+
+```{r}
+# Create a matrix 
+bars<-matrix(c(4, 3, 1, 1,
+               5, 6, 3, 1,
+               4, 5, 1, 2,
+               4, 5, 3, 2,
+               7, 6, 5, 3), nrow=5, byrow=TRUE)
+
+# label rows and columns
+rownames(bars)<-c("Cat1", "Cat2", "Cat3", "Cat4", "Cat5")
+colnames(bars)<-c("A", "B", "C", "D")
+
+bars
+```
+##### This data is NOT tidy
+
+I use the `melt` function to establish observations are row and variables as columns.  You can also use `gather`.
+
+```{r}
+#install.packages("reshape2")
+library(reshape2)
+barsM<-melt(bars)
+
+# Now look at the data
+head(barsM)
+```
+
+##### Now create a tiled plot
+
+```{r}
+library(tidyverse)
+ggplot(barsM, aes(#INSERT CODE HERE#)) + # x and y axes => Var1 and Var2
+  #INSERT CODE HERE# + # background colours are mapped according to the value column
+  #INSERT CODE HERE# +
+  #INSERT CODE HERE#
+```
+##### Here is another example from the textbook
+
+```{r}
+## FIG 2.5 (Data on github)
+heat<-read.delim("https://raw.githubusercontent.com/kitadasmalley/DATA502/main/FALL2022/Data/swdFig2.5.txt",
+                 header = TRUE)
+
+rownames(heat)<-heat[,1]
+heat<-heat[,-1]
+headM<-melt(as.matrix(heat))
+
+# Relevel categories in reverse
+headM$Var1<-ordered(headM$Var1, levels = rev(levels(headM$Var1)))
+
+ggplot(headM, aes(#INSERT CODE HERE# + # x and y axes => Var1 and Var2
+  #INSERT CODE HERE# + # background colours are mapped according to the value column
+  #INSERT CODE HERE#+
+  #INSERT CODE HERE#+
+  #INSERT CODE HERE#
+```
+
+```{r}
+## NOTE: You can also use the gather function in tidyr to do the manipulation
+heat<-read.delim("https://raw.githubusercontent.com/kitadasmalley/DATA502/main/FALL2022/Data/swdFig2.5.txt",
+                 header = TRUE)
+headG<-heat%>%
+  gather("type", "percent", -X)
+```
+
+
+#### 2) Simple Text
+
+Here is a simple example where text would suffice:
+
+```{r}
+## RECREATE FIG2.2 (DATA ON GITHUB)
+mothers<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0202-3.csv",
+                header=TRUE, 
+                stringsAsFactors = FALSE)
+
+# geom_col used when counts instead of indiv obs
+ggplot(mothers, aes(#INSERT CODE HERE#
+  #INSERT CODE HERE#
+  #INSERT CODE HERE#
+  #INSERT CODE HERE#
+  #INSERT CODE HERE#
+  #INSERT CODE HERE#
+```
+
+#### 3) Scatter Plot
+
+##### Import the data
+
+```{r}
+## RECREATE FIG2.6 and FIG2.7
+## DATA ON GITHUB
+drive<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0206-7.csv",
+               header=TRUE, 
+               stringsAsFactors = FALSE)
+
+## USE str to see what data are available
+str(drive)
+```
+
+##### Remove Currency Symbols
+
+When R sees non-numeric characters anyway in the column it will assume the column is composed of strings.  We use `gsub` as a way to find and replace these characters. 
+
+```{r}
+drive$Cost.Per.Mile2<-as.numeric(gsub("[\\$,]", "", drive$Cost.Per.Mile))
+drive$Miles.Driven2<-as.numeric(gsub("[\\$,]", "", drive$Miles.Driven))
+
+str(drive)
+```
+
+##### Create above average variable
+
+```{r}
+above<-drive%>%
+  mutate(above=#INSERT CODE HERE#
+```
+
+##### Plot your data
+
+```{r}
+ggplot(above, aes(#INSERT CODE HERE#
+  geom_#INSERT CODE HERE#
+  geom_#INSERT CODE HERE#
+  geom_#INSERT CODE HERE#
+  xlab(#INSERT CODE HERE#
+  ylab(#INSERT CODE HERE#
+  theme_#INSERT CODE HERE#
+  theme(#INSERT CODE HERE#
+  ggtitle(#INSERT CODE HERE#
+```
+
+#### 4) Line Graph
+
+In this example, we need to use a date type variable. This can be done with the package lubridate.
+
+```{r}
+## RECREATE FIG2.8
+#install.packages("lubridate")
+library(lubridate)
+
+lineEx<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0209.csv",
+                header=TRUE, 
+                stringsAsFactors = FALSE)
+
+lineDate<-lineEx%>% 
+  mutate(date = ymd(paste(Year, Month, 1)))
+
+ggplot(lineDate, aes(#INSERT CODE HERE#
+  geom_#INSERT CODE HERE#
+  theme_#INSERT CODE HERE#
+```
+
+#### 5) Slope Graph
+
+Warning: These data are not tidy. Use the gather function!
+
+```{r}
+## RECREATE FIG2.10
+
+slope<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0210-11.csv",
+                header=TRUE, 
+                stringsAsFactors = FALSE)
+
+# needs some transformation
+colnames(slope)<-c("Item", 2014, 2015)
+
+slopeT<-slope%>%
+  gather("year", "percent", -Item)
+
+slopeT$percent2<-as.numeric(gsub("[\\%]", "", slopeT$percent))/100
+
+ggplot(slopeT, aes(#INSERT CODE HERE#
+  geom_#INSERT CODE HERE#
+  theme_#INSERT CODE HERE#
+```
+
+#### 6) Bar Graphs
+
+Let’s create some fake data for this:
+
+```{r}
+# This is how the book does it
+bars<-matrix(c(4, 3, 1, 1,
+               5, 6, 3, 1,
+               4, 5, 1, 2,
+               4, 5, 3, 2,
+               7, 6, 5, 3), nrow=5, byrow=TRUE)
+
+bars<-cbind(c("Cat1", "Cat2", "Cat3", "Cat4", "Cat5"), 
+            bars)
+
+colnames(bars)<-c("Category","A", "B", "C", "D")
+
+# But we need to make it tidy
+barsT<-as.data.frame(bars)%>%
+  gather("Letter", "Count", 2:5)
+
+barsT$Count<-as.numeric(barsT$Count)
+```
+
+There are many different kinds of bar graphs: 
+
+##### A. Vanilla (Vertical)
+
+```{r}
+ggplot(barsT, aes(#INSERT CODE HERE#
+  geom_bar(stat=#INSERT CODE HERE#
+```
+
+##### B. Vertical Stacked Bar Chart
+
+```{r}
+ggplot(barsT, aes(#INSERT CODE HERE#
+  geom_bar(#INSERT CODE HERE#
+```
+
+###### B2. Vertical Stacked Bar Chart as Percentages
+
+```{r}
+ggplot(barsT, aes(#INSERT CODE HERE#
+  geom_bar(#INSERT CODE HERE#
+```
+
+##### C. Vertical Side-by-side Bar Chart
+
+```{r}
+ggplot(barsT, aes(#INSERT CODE HERE#
+  geom_bar(#INSERT CODE HERE#
+```
+
+##### D. Horizontal Bar Chart
+
+Any of the plots above can be made horizontal!
+
+```{r}
+ggplot(barsT, aes(#INSERT CODE HERE#
+  geom_bar(#INSERT CODE HERE#
+  coord_#INSERT CODE HERE#
+```
+
+### II. Esquisse
+
+Since we are learning how to make graphics for the first time. I suggest using this helpful tool!
+
+```{r}
+#install.packages("esquisse")
+library(esquisse)
+```
+
+#### Please load the data for the examples that I have pre-processed
+
+##### A. Mothers
+
+```{r}
+## MOTHER EXAMPLE
+mothers<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0202-3.csv",
+                header=TRUE, 
+                stringsAsFactors = FALSE)
+```
+
+
+##### B. Drive
+
+```{r}
+## MILES DRIVEN
+drive<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0206-7.csv",
+               header=TRUE, 
+               stringsAsFactors = FALSE)
+drive$Cost.Per.Mile2<-as.numeric(gsub("[\\$,]", "", drive$Cost.Per.Mile))
+drive$Miles.Driven2<-as.numeric(gsub("[\\$,]", "", drive$Miles.Driven))
+
+above<-drive%>%
+  mutate(above=(Cost.Per.Mile2>=mean(Cost.Per.Mile2)))
+```
+
+
+##### C. Line Date
+
+```{r}
+## PASSPORT WAIT
+#install.packages("lubridate")
+library(lubridate)
+
+lineEx<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0209.csv",
+                header=TRUE, 
+                stringsAsFactors = FALSE)
+
+lineDate<-lineEx%>% 
+  mutate(date = ymd(paste(Year, Month, 1)))
+```
+
+##### D. Slope T
+
+```{r}
+## EMPLOYEE FEEDBACK
+slope<-read.csv("https://raw.githubusercontent.com/adamribaudo/storytelling-with-data-ggplot/master/data/FIG0210-11.csv",
+                header=TRUE, 
+                stringsAsFactors = FALSE)
+
+# needs some transformation
+colnames(slope)<-c("Item", 2014, 2015)
+
+slopeT<-slope%>%
+  gather("year", "percent", -Item)
+
+slopeT$percent2<-as.numeric(gsub("[\\%]", "", slopeT$percent))/100
+```
+
+### III: Let's Practice
+
+```{r}
+### MEALS
+meals<-read.delim("https://raw.githubusercontent.com/kitadasmalley/DATA502/main/FALL2022/Data/ch2_meals.txt",
+                 header = TRUE)
+str(meals)
+
+### HEATMAP
+ggplot(meals, aes(#INSERT CODE HERE#
+  geom_tile(#INSERT CODE HERE#
+  geom_text(aes(#INSERT CODE HERE#
+  scale_fill_gradient2(#INSERT CODE HERE#
+  theme_#INSERT CODE HERE#
+
+### BAR GRAPH
+ggplot(meals, aes(#INSERT CODE HERE#
+  geom_bar(#INSERT CODE HERE#
+  theme_#INSERT CODE HERE#
+
+### LINE PLOT
+ggplot(meals, aes(#INSERT CODE HERE#
+  geom_#INSERT CODE HERE#
+  theme_#INSERT CODE HERE#
+```
+
