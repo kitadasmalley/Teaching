@@ -1,0 +1,95 @@
+---
+title: 'Data Viz: Recreating Shot Plot'
+author: "INSERT NAME"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Los Angeles Lakers Shooting Heatmap
+
+In this exercise we will recreate a graphic that describes positions on the basketball court the average points scored from that position and the frequency at which shot are taken from this position. 
+
+### The Data
+
+These data represent the LA Lakers 2009/2010 season and come from http://www.basketballgeek.com.  We are going to access this data from my github. 
+```{r}
+shots_sum<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA502/main/FALL2021/Data/shots_sum.csv",
+                header=TRUE)
+head(shots_sum)
+
+```
+
+## Step 1: Start with a simple scatterplot
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+
+# Step 1 : Scatterplot
+## FILL IN CODE HERE ##
+```
+
+## Step 2: Add color
+```{r}
+# Step 2: Add color
+## FILL IN CODE HERE ##
+```
+
+## Step 3: Size the bubbles
+```{r}
+# Step 3: Size bubbles
+## FILL IN CODE HERE ##
+```
+
+#### What is going on with the big dot in the center? 
+
+Its messing up the sizing!
+
+Let's explore:
+```{r}
+## FILL IN CODE HERE ##
+```
+
+## Step 4: Remove point and re-plot
+```{r}
+# Step 4: Subset the data to remove the "outlier"
+## FILL IN CODE HERE ##
+
+# this can also be done with filer
+## FILL IN CODE HERE ##
+
+# graph again
+## FILL IN CODE HERE ##
+```
+
+## Step 5: Change limits to focus within the 3 point boundary
+```{r}
+## FILL IN CODE HERE ##
+```
+
+## Step 6: X and Y distance should be in same distance
+```{r}
+# Step 6: x and y distance should be in same distance
+## FILL IN CODE HERE ##
+```
+
+## Step 7: Change color from green to red
+```{r}
+# Step 7: Change color from green to red
+## FILL IN CODE HERE ##
+```
+
+## Step 8: Change size scale
+```{r}
+# Step 8: Change size scale
+## FILL IN CODE HERE ##
+```
+
+## Step 9: Polishing
+```{r}
+# Step 9: Polishing
+## FILL IN CODE HERE ##
+
+```
+
