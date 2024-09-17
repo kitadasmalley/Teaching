@@ -1,0 +1,90 @@
+---
+title: "Guinea Pig Example"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+data("ToothGrowth")
+?ToothGrowth
+str(ToothGrowth)
+```
+
+#### 1) What do the rows of this dataset represent?
+
+```{}
+The observations are guinea pigs.
+```
+
+
+#### 2) What do the columns of this dataset represent? Indicate whether each variable in the study is numerical or categorical. If numerical, identify as continuous or discrete. If categorical, indicate if the variable is ordinal.
+
+```{}
+len: Length of tooth (numeric - continuous)
+supp: Supplement of vitamin c or orange juice (categorical, nominal)
+dose: Amount of vitmain c (numeric - discrete )
+```
+
+
+#### 3) What are the response and explanatory variables in this study?
+
+```{}
+response: Tooth length (len)
+explanatory variables: 
+1) supp: vitamin c or oj
+2) dose: level of amount of supp
+```
+
+
+
+#### 4) Describe how you might assign guinea pigs to treatments.
+
+```{}
+I would randomly assign gp to supplements and then within the supplement groups randomly assign gp to dose levels. 
+
+* blocking for extra credit....
+```
+
+
+#### 5) Create a boxplot. Use the following code.
+
+```{}
+## Here is some pseudo code to help
+## i.e. this will not run
+boxplot(RESPONSE~EXPLANATORY, data=DATA_SET, xlab="EXPLANATORY",
+ylab="RESPONSE")
+```
+
+```{r}
+### variable assignment
+resp<-ToothGrowth$len
+expl_1<-ToothGrowth$dose
+expl_2<-ToothGrowth$supp
+
+boxplot(resp~expl_1)
+boxplot(resp~expl_2)
+```
+
+```{r}
+### relative
+boxplot(len~dose, data=ToothGrowth)
+```
+
+```{r}
+library(tidyverse)
+ggplot(data=ToothGrowth, aes(x=factor(dose), y=len, fill=supp))+
+  geom_boxplot()
+```
+
+
+#### 6) Based on all the parts above, can you help the researcher find evidence to support or refute their hypothesis? Explain.
+
+```{}
+YOUR ANSWER HERE
+```
+
+
