@@ -1,0 +1,149 @@
+---
+title: 'FALL 2024 DATA151: Midterm #1 (R Section)'
+author: "STUDENT NAME"
+date: "TODAYS DATE"
+output: pdf_document
+---
+  
+
+### You Say Tomato, I Say TOMATO!
+
+Please read ALL descriptions and directions. 
+
+#### Description: 
+
+
+Dr. Ron Balham is doing an experiment on tomatoes.
+
+Fertilizers, when applied in the correct amount, can positively affect the root mass of tomatoes by promoting healthy root growth and development, but excessive fertilization can actually damage the roots, leading to reduced root mass and potential plant stress; the optimal level of fertilizer is crucial to achieve a healthy root system for optimal tomato growth.
+
+
+Dr. Balham wants to test four different fertilizer treatments: 
+
+- `water`
+- `conc nutrient`: concentrated nutrients (fertilizer)
+- `3x conc nutrient`: triple strength concentrated nutrients
+- `2-4-D + conc nutrient`: pesticide and fertilizer together 
+
+Note: 
+
+2-4-D is a widely used herbicide that controls broadleaf weeds that has been used as a pesticide since the 1940s. It is used in many places including turf, lawns, rights-of-way, aquatic sites, forestry sites, and a variety of field, fruit and vegetable crops.
+  
+
+#### Part 1: Getting Started (5 points - 1 point each!)
+
+* Create a new R markdown document for the Midterm template 
+* Create a folder called "MIDTERM_1"
+* Save new Rmd in your R Studio Cloud as "data151_mid1_YOURNAME"
+* Change the author and date in the heading of the R markdown
+* Leave yourself at least 3 comments in your code chunks
+
+#### Part 2: Installing the package  (2.5 points)
+
+In order to access these data you will need to install the package `DAAG`.
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+#### Part 3: Library (2.5 points)
+
+Now you actually need to call the library for the DAAG package to be able to get the data.  
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+#### Part 4: Bring the Data into the Global Environment (2.5 points)
+
+These data are simply called `tomato`.  Please call them into the global environment
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+
+#### Part 5: Structure 
+
+##### A) (2.5 points) Look at the structure of your data.  
+
+How many observations are there? 
+  
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+##### B) (2.5 points) Look at the first six rows of the data frame.  
+
+Are these data tidy?  Why or why not? 
+  
+NOTE: You must write code with the proper function for this.
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+
+#### Part 6: Understanding the study 
+
+
+##### A): What is the response variable? (2.5 points)
+
+```{}
+YOUR ANSWER HERE
+
+```
+
+##### B): What is the explanatory variable? (2.5 points)
+
+Is there a control in this study?  What is it?
+
+```{}
+YOUR ANSWER HERE
+
+```
+
+
+#### Part 7: Make a hypothesis (2.5 points)
+
+Write a hypothesis about how you think the fertilizer treatments might effect the root mass (based on the introduction to the data above.)
+
+
+```{}
+YOUR ANSWER HERE: 
+
+```
+
+#### Part 8: Visualize (2.5 points)
+
+Explore the relationship between the treatments and weight by creating a boxplot.  
+
+HINT: Please look at your class notes from OrchardSprays and ToothGrowth.
+
+```{r}
+## INSERT CODE HERE ###
+
+```
+
+#### Part 9: Observations (2.5 points)
+
+What are your observations from this plot? Does your hypothesis (from Part 7) appear to be supported? Explain.
+
+```{}
+YOUR ANSWER HERE: 
+
+```
+
+#### EXTRA CREDIT (3 points)
+
+Suppose the researcher found that there was an irrigation gradient in the field from North to South AND soil differences from East to West.  What type of experimental design would you recommend he do?  Why?
+
+```{}
+YOUR ANSWER HERE
+```
+
