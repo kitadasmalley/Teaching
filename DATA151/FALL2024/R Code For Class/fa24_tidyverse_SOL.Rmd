@@ -1,0 +1,304 @@
+---
+title: 'DATA151: Introduction to `tidyverse`'
+output: 
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 6
+---
+
+## FALL 2024
+## Learning Objectives
+
+In this session students will learn the basics of working with `dplyr` verbs from the `tidyverse` as well as employ the pipe operator `%>%`. 
+
+* Use the piping operator `%>%` in your code to improve readability
+* Employ `dplyr` Verbs
+
+  * `filter()`
+  * `summarise()`
+  * `mutate()`
+  
+You will need to start by calling the `tidyverse` library. 
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+
+## PART I: The Data
+In this lesson we will use the Lahman's Baseball Database, 1871-2019.
+
+### 1. Install the package
+```{r}
+# Import the package 
+#install.packages("Lahman")
+```
+
+### 2. Call the library
+```{r}
+library(Lahman)
+```
+
+### 3. Load in the data
+
+We will be using the `People` data within the `Lahman` package.  There are other datasets available, such as `Batting` and `Pitching`. 
+
+```{r}
+# Import the data for baseball players 
+data(People)
+
+# Let's take a peek at the data
+head(People)
+```
+
+### 4. Learn about these data
+
+Learn a little bit about the dataset before you start. 
+
+```{r}
+?People
+```
+
+### 5. Data Structure 
+
+What are the variables contained in this dataset? How would you classify each variables’ type?
+
+```{r}
+str(People)
+```
+
+## PART II: Pipe `%>%` Operator
+
+*Ceci n'est pas une pipe*
+
+The pipe `%>%` operator takes a data set from the left and passes it into a function on the right.  This operator can be used to help you read your code.  When you are reading your code out loud try replacing `%>%` with saying *"and then"*.  These operators can be used to make your code more efficient (i.e. use less lines and less typing).  They can also be used sequentially refine your data. 
+
+
+## PART III: Verbs
+
+### 1. `filter`
+
+We can use the `filter` verb to identify the observations that adhere to a specification.  
+
+#### Filtering with strings
+
+Let's look at only baseball players that are from the United States of America.
+
+Note: You don't want to print the whole data set, unless you want to scroll for a long time... 
+
+```{r}
+## FILTER USA
+usa<-People %>%
+  filter(birthCountry == "USA")
+
+## How big is this? 
+## How many players are from the USA?
+dim(usa)
+```
+
+##### Try it!
+
+What countries are represented in these data?
+
+```{r}
+unique(People$birthCountry)
+```
+
+Pick your favorite country from this list repeat the example.  How many baseball players are from your chosen country?  
+
+```{r}
+## INSERT YOUR CODE HERE ## 
+```
+
+##### Think about it...
+
+What do you think the code would look like to only retain the rows for baseball players from Oregon? 
+
+Hint: Use the variable `birthState`
+
+```{r}
+
+oregon<-People %>%
+  filter(birthCountry == "USA")%>%
+  filter(birthState == "OR")
+
+dim(oregon)
+
+```
+
+
+
+#### Filtering with numbers
+
+Create a new dataframe that only includes players less than 60 inches tall. Show the dataset. How many players are there who are less than 60 inches tall? What are their names?
+
+```{r}
+
+less5 <- People %>% 
+  filter(height < 60)
+
+less5
+
+```
+
+### 2. `count`
+
+```{r}
+
+state<-People %>%
+  filter(birthCountry == "USA")%>%
+  count(birthState)
+
+head(state)
+
+```
+
+##### Learn by doing!
+
+How many players bat right (R), left (L), or both (B)?  
+
+Hint: Use the variable `bats`.
+
+```{r}
+
+batSide<-People %>%
+  count(bats)
+
+batSide
+
+```
+
+What does `NA` mean?
+
+```{}
+ANSWER HERE:
+```
+
+### 3. `arrange`
+
+```{r}
+
+stateArr<-People %>%
+  filter(birthCountry == "USA")%>%
+  count(birthState)%>%
+  arrange(desc(n))
+
+head(stateArr)
+
+  
+```
+
+### 4. `group_by` and `summarise`
+
+Create subgroups of your data using `group_by` with a categorical variable.  Once the data has been grouped you can perform numerical summaries on them. 
+
+Make a dataframe that displays just the average height of players from each country. What country has the tallest players? 
+
+```{r}
+
+tallest <- People %>% 
+  group_by(birthCountry) %>% 
+  summarise(avg_height=mean(height,na.rm = TRUE)) %>% 
+  arrange(desc(avg_height))
+
+tallest
+
+```
+
+### 5. `select`
+
+Rather than keeping all of the variables, we can select the ones that we are interested in using.
+
+```{r}
+
+peopleS<-People%>%
+  select(c(nameFirst, nameLast, weight, height))
+
+str(peopleS)
+
+```
+
+
+### 6. `mutate`
+
+The `mutate` function can be used to create a new variable (a new column) as a function of other columns. 
+
+#### Example BMI
+
+Body Mass Index (BMI) is a convenient rule of thumb used to broadly categorize a person as underweight, normal weight, overweight, or obese based on tissue mass (muscle, fat, and bone) and height. 
+
+$$BMI = \frac{weight (lbs) \times 703}{height^2 (in^2)}$$
+```{r}
+
+peopleBMI<-People %>% 
+  select(c(nameFirst, nameLast, weight, height))%>%
+  mutate(bmi=(weight*703)/(height^2))
+
+## OBSERVE THAT THE NEW COLUMN IS ADDED ON
+str(peopleBMI)
+
+```
+
+
+The CDC defines a BMI greater than 30 “within an obese range”. Create a dataframe of only the obese players. How many players are in this dataset? Which player has the highest BMI?
+
+```{r}
+
+bmi30<-People %>% 
+  select(c(nameFirst, nameLast, weight, height))%>%
+  mutate(bmi=(weight*703)/(height^2))%>%
+  filter(bmi>30)%>%
+  arrange(desc(bmi))
+
+head(bmi30)
+
+```
+
+#### Example Dates
+
+If you look back at the structure of the data set, you might notice that `birthDate` and `deathDate` are `Date` variables.  This is a new type of variable for us!  If you subtract `Date` variables you will get the number of data between the dates in question. 
+
+
+Creating a dataset for only baseball players who have deceased, add a new column to the data set for a player’s lifetime (in years). You can assume that each year has 365 days. Which baseball player lived the longest? How many years old was he?
+
+```{r}
+
+oldest <- People %>% 
+  select(c(nameFirst, nameLast, birthDate, deathDate, deathYear))%>%
+  filter(is.na(deathYear)==FALSE) %>% 
+  mutate(lifetime=(deathDate-birthDate)/365) %>% 
+  arrange(desc(lifetime))
+
+head(oldest)
+
+```
+
+If we want to remove this `days` label we can use the `as.numeric` wrapper function. 
+
+```{r}
+
+oldest <- People %>% 
+  select(c(nameFirst, nameLast, birthDate, deathDate, deathYear))%>%
+  filter(is.na(deathYear)==FALSE) %>% 
+  mutate(lifetime=as.numeric((deathDate-birthDate)/365) )%>% 
+  arrange(desc(lifetime))
+
+head(oldest)
+
+```
+
+##### Try it!
+
+Convert the debut and finalGame variables to dates using the `as.Date()` function. Add a new column to the data set for a player’s career (in years). You can assume that each year has 365 days. Which baseball player had the longest career? How long was it?
+
+```{r}
+
+longest <- People %>% 
+  select(c(nameFirst, nameLast, finalGame, debut))%>%
+  mutate(career=as.numeric((as.Date(finalGame)-as.Date(debut))/365)) %>% 
+  arrange(desc(career))
+
+head(longest)
+
+```
