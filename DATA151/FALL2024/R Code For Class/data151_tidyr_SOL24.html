@@ -1626,6 +1626,20 @@ head(stocksL)</code></pre>
 #stocksG&lt;-stocks%&gt;%
 #  gather(key=stock, value=price, -time )</code></pre>
 </div>
+<div id="combine-tidyr-and-dplyr" class="section level5">
+<h5>Combine <code>tidyr</code> and <code>dplyr</code></h5>
+<pre class="r"><code>stocks%&gt;%
+  pivot_longer(-time, names_to=&quot;stock&quot;, values_to=&quot;price&quot;)%&gt;%
+  group_by(stock)%&gt;%
+  summarise(min=min(price), 
+            max=max(price))</code></pre>
+<pre><code>## # A tibble: 3 × 3
+##   stock   min   max
+##   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 X      19.2  21.6
+## 2 Y      15.6  23.0
+## 3 Z      12.0  23.7</code></pre>
+</div>
 <div id="step-3-visualize-1" class="section level5">
 <h5>Step 3: Visualize</h5>
 <pre class="r"><code>ggplot(stocksL, aes(time, price, color=stock))+
@@ -1708,8 +1722,8 @@ names(hi)</code></pre>
 ## [19] &quot;2014&quot;      &quot;2015&quot;      &quot;2016&quot;      &quot;2017&quot;      &quot;2018&quot;      &quot;2019&quot;     
 ## [25] &quot;2020&quot;      &quot;2021&quot;</code></pre>
 </div>
-<div id="step-4-tidy-data-with-gather" class="section level5">
-<h5>Step 4: Tidy Data with <code>gather()</code></h5>
+<div id="step-4-tidy-data-with-pivot_longer" class="section level5">
+<h5>Step 4: Tidy Data with <code>pivot_longer()</code></h5>
 <pre class="r"><code>## TIDY YOUR DATA
 ## INSERT CODE HERE ##
 hiL&lt;-hi%&gt;%
