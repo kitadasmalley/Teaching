@@ -1,0 +1,427 @@
+---
+title: 'DATA151: Tidyr and Joins'
+author: "INSERT NAME HERE"
+output: 
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+---
+
+### Learning Objectives
+
+In this lesson students will gain more practice with the `tidyverse` with a particular focus on wrangling the `tidyr` package.  
+
+This lesson covers:
+
+* `tidyr` Package 
+  * `pivot_longer()` (older version: `gather()`)
+  * `pivot_wider()` (older version `spread()`)
+  * `unite()`
+  * `separate()` 
+  
+* Joins: `left_join`, `inner_join`, `right_join`
+
+UPDATED: October 2024
+
+Before you start you will need to load the `tidyverse`
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+
+### PART I: `tidyr`
+
+### Does your data spark joy?
+
+#### Example 1: Football
+
+##### Step 1: Get the data
+```{r message=FALSE, warning=FALSE}
+library(openintro)
+data("helium")
+
+## Look at data 
+head(helium)
+```
+
+This is not the format we want our data to be in!  Let's wrangle it!
+
+##### Step 2: Wrangle
+```{r}
+### WRANGLE
+football<-helium%>%
+  pivot_longer(!trial, names_to = "airType", values_to="yards")
+
+head(football)
+
+
+# AN OLDER FUNCTION FOR THIS IS GATHER
+#football<-helium%>%
+#  gather("airType", "yards", -trial)
+```
+
+#### Think about it!
+
+How does `pivot_longer` work?
+
+```{}
+YOUR ANSWER HERE
+```
+
+##### Step 3: Visualize
+
+Why do we need to have this format?
+
+```{r}
+## ggplot
+## INSERT CODE HERE ##
+ggplot(data = football, aes(x = airType, y = yards, fill = airType))+
+  geom_boxplot()
+```
+
+
+#### Toy Example
+
+##### Step 1: Generate Data
+```{r}
+# generate stock market data
+set.seed(1)
+stocks <- data.frame(
+  time = as.Date('2009-01-01') + 0:9,
+  X = rnorm(10, 20, 1),
+  Y = rnorm(10, 20, 2),
+  Z = rnorm(10, 20, 4)
+)
+stocks 
+```
+
+##### Step 2: Pivot Longer
+
+```{r}
+# pivot_longer
+## INSERT CODE HERE ##
+stocksL<-stocks%>%
+  pivot_longer(-time, names_to="stock", values_to="price")
+
+head(stocksL)
+
+# OLD METHOD gather 
+#stocksG<-stocks%>%
+#  gather(key=stock, value=price, -time )
+```
+
+##### Step 3: Visualize
+
+```{r}
+ggplot(stocksL, aes(time, price, color=stock))+
+  geom_line()
+```
+
+##### Step 4: Pivot Wider
+
+```{r}
+stocksW<-stocksL%>%
+  pivot_wider(names_from = stock, values_from = price)
+
+head(stocksW)
+
+## OLD CODE spread
+#stocksS<-stocksG%>%
+#  spread(key=stock, value=price)
+```
+
+#### Real World Example: Hawaii Tourism
+
+##### Step 1: Import Data
+
+```{r}
+## IMPORT THE DATA
+## TRY TO IMPORT FILE ##
+
+### JUST IN CASE HERE IS THE LINK ###
+hi <- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/Hawaii_Tourism.csv", header=TRUE)
+```
+
+##### Step 2: Look at the structure
+
+```{r}
+## LOOK AT THE STRUCTURE
+## INSERT CODE HERE ##
+str(hi)
+```
+
+##### Step 3: Rename the columns
+
+```{r}
+## RENAME THE COLUMNS
+## INSERT CODE HERE ##
+colnames(hi)[4:26]<-1999:2021
+
+names(hi)
+```
+
+##### Step 4: Tidy Data with `gather()`
+
+```{r}
+## TIDY YOUR DATA
+## INSERT CODE HERE ##
+hiL<-hi%>%
+  filter(Units=="days")%>%
+  select(-Units)%>%
+  pivot_longer(-c(Group, Indicator), names_to = "year", values_to = "days")
+
+## LOOK AT THE NEW STRUCTURE
+str(hiL)
+```
+
+##### Step 5: Visualize Trends
+
+```{r}
+## YEAR NEEDS TO BE NUMERIC TO PLOT
+## INSERT CODE HERE ##
+hiL$year<-as.numeric(hiL$year)
+
+str(hiL)
+
+## SCATTERPLOT WITH TREND
+## INSERT CODE HERE ##
+ggplot(hiL, aes(x=year, y=days))+
+  geom_point()
+
+## TRY GEOM_JITTER 
+## INSERT CODE HERE ##
+ggplot(hiL, aes(x=year, y=days))+
+  geom_jitter()+
+  geom_smooth()
+```
+
+##### Step 6: Studying Subgroups
+
+Which island is the most popular to visit?
+
+Use `dplyr` to explore subgroups. 
+
+```{r}
+## WHAT ISLAND IS MOST POPULAR?
+islands<-hiL%>%
+  filter(Indicator!="LOS Statewide")%>%
+  group_by(Indicator, year)%>%
+  summarise(avgDays=mean(days))
+
+## INSERT CODE HERE ##
+## WHATS WRONG WITH THIS??
+ggplot(islands, aes(x=year, y=avgDays, color=Indicator))+
+  geom_line()
+```
+
+Oh no!  What happened?! 
+
+We forgot about NAs!
+
+```{r}
+## WHAT ISLAND IS MOST POPULAR? 
+## TAKE 2
+
+## INSERT CODE HERE ##
+islands<-hiL%>%
+  filter(Indicator!="LOS Statewide")%>%
+  group_by(Indicator, year)%>%
+  summarise(avgDays=mean(days, na.rm=TRUE))
+
+## INSERT CODE HERE ##
+ggplot(islands, aes(x=year, y=avgDays, color=Indicator))+
+  geom_line()
+```
+
+#### Try another example! 
+
+Are there other interesting trends?  Try looking at the reasons for traveling to Hawaii.  These are specified in the `Group` variable. 
+
+```{r}
+## ARE THERE TRENDS BY TYPE?
+## INSERT CODE HERE ##
+
+## INSERT CODE HERE ##
+```
+
+### PART II: Joins
+
+There are three types of joins that we will look at:
+
+* Inner Join: Looks for only elements that exist in both dataframes
+
+* Left Join (or Right Join): Matches elements from the left dataframe to the right
+
+
+
+#### Toy Example
+
+##### Step 1: Load Data
+
+Tibbles are like data frames that can be more easily manipulated in the tidyverse. In this example we create a tibble for comic book characters.
+
+```{r}
+# a tibble is a type of a data frame
+
+superheroes <- tibble::tribble(
+  ~name, ~alignment,  ~gender,          ~publisher,
+  "Magneto",      "bad",   "male",            "Marvel",
+  "Storm",     "good", "female",            "Marvel",
+  "Mystique",      "bad", "female",            "Marvel",
+  "Batman",     "good",   "male",                "DC",
+  "Joker",      "bad",   "male",                "DC",
+  "Catwoman",      "bad", "female",                "DC",
+  "Hellboy",     "good",   "male", "Dark Horse Comics"
+)
+
+publishers <- tibble::tribble(
+  ~publisher, ~yr_founded,
+  "DC",       1934L,
+  "Marvel",       1939L,
+  "Image",       1992L
+)
+```
+
+##### Step 2: Inner Join
+
+```{r}
+# inner join super hero and publisher
+insp<-inner_join(superheroes, publishers)
+
+insp
+```
+
+##### Step 3: Left Join
+
+```{r}
+# left join super hero and publisher 
+ljsp<-left_join(superheroes, publishers)
+
+ljsp
+```
+
+
+#### Real World Example: NBA
+
+##### Step 1: Load Data
+
+*Data Set #1: NBA Salaries*
+
+All NBA Player’s salaries 2019-2020.
+
+Scrape from ESPN (http://www.espn.com/nba/salaries).
+
+Hosted on Kaggle at:
+
+https://www.kaggle.com/datasets/junfenglim/nba-player-salaries-201920
+
+```{r}
+## SALARY DATA for 2019-2020 season
+salaries1920 <- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/nba2019-20.csv", header=TRUE)
+```
+
+*Data Set #2: NBA Players*
+
+The data set contains over two decades of data on each player who has been part of an NBA teams’ roster. It captures demographic variables such as age, height, weight and place of birth, biographical details like the team played for, draft year and round. In addition, it has basic box score statistics such as games played, average number of points, rebounds, assists, etc.
+
+These data are hosted on Kaggle at:
+
+https://www.kaggle.com/datasets/justinas/nba-players-data
+
+```{r}
+## METRICS ON PLAYER PERFORMANCE
+## 1996 to 2022
+all_seasons <- read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/all_seasons.csv", header=TRUE)
+```
+
+##### Step 2: Learn about your data
+
+```{r}
+# SALARIES
+## INSERT CODE HERE ##
+str(salaries1920)
+
+# METRICS
+## INSERT CODE HERE ##
+str(all_seasons)
+```
+
+##### Step 3: Wrangle your data
+
+We need to make an apples to apples comparison.  
+
+* Filter the season data by 2019-2020 season.  
+* We also need to have the same name for the variable we wish to match.
+
+```{r}
+## INSERT CODE HERE ##
+season1920<-all_seasons%>%
+  filter(season=="2019-20")%>%
+  select(-season)%>%
+  rename(player=player_name)
+
+str(season1920)
+```
+
+##### Step 4: Join the data
+
+```{r}
+## WHAT KIND OF JOIN SHOULD WE USE?
+## INSERT CODE HERE ##
+joinNBA<-salaries1920%>%
+  left_join(season1920)
+```
+
+##### Step 5: Visualize
+
+```{r}
+## GGPLOT2
+## INSERT CODE HERE ##
+
+ggplot(joinNBA, aes(x=pts, y=salary))+
+  geom_point()+
+  geom_smooth()
+```
+
+
+
+### PART III: BONUS Tidy Material
+
+#### Combine columns with `unite`
+
+##### Step 1: Create Data
+```{r}
+# lets create more fake data for dates and times
+set.seed(1)
+date <- as.Date('2016-01-01') + 0:14
+hour <- sample(1:24, 15)
+min <- sample(1:60, 15)
+second <- sample(1:60, 15)
+event <- sample(letters, 15)
+data <- data.frame(date, hour, min, second, event)
+data
+```
+
+##### Step 2: Unite
+
+```{r}
+dataUnite <- data %>%
+  unite(datehour, date, hour, sep = ' ') %>%
+  unite(datetime, datehour, min, second, sep = ':')
+
+str(dataUnite)
+```
+
+##### Step 3: Separate
+
+```{r}
+# seperate 
+dataSep <- dataUnite %>% 
+  separate(datetime, c('date', 'time'), sep = ' ') %>% 
+  separate(time, c('hour', 'min', 'second'), sep = ':')
+
+dataSep
+```
