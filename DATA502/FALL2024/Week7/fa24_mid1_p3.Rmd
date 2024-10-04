@@ -1,0 +1,52 @@
+---
+title: "Fall 2024 - Midterm #1"
+author: "INSERT NAME HERE"
+date: "2024-10-03"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 3: Recreate
+
+
+#### Step 1: Read the article 
+
+
+“Mistakes, we’ve drawn a few” - You can access this article on CANVAS.
+
+This is a short article about visualizations published by The Economist and how they have critiqued their own graphics.  I think this is a great lesson about taking a critical lens on our own work and that this is a learning process! 
+
+#### Step 2: Write a 3-5 sentence summary of your personal take-aways from the article (3 points)
+
+Yes, these can be bullet points!
+
+#### Step 3: Choose a graphic to recreate! 
+
+There are two options!  Within each of these options you can either choose to recreate the original graphic (on the left) or the improved graphic (on the right). 
+
+#### OPTION #1 DATA
+
+```{r}
+pensionHKS<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA502/FALL2024/Week7/pensionGapminder.csv", 
+                   header=TRUE)
+
+str(pensionHKS)
+```
+
+
+#### OPTION #2 DATA
+
+```{r}
+balanceHKS<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA502/FALL2024/Week7/balances.csv", 
+              header=TRUE)
+
+str(balanceHKS)
+
+
+econPal1<-c("#8ea0ac", "#b4bc41", "#f15b3d", 
+            "#008a84", "#70babb", "#eea41d", 
+            "#6ecef4", "#e99273", "#00a3da", "#00506d")
+```
