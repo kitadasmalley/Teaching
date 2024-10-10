@@ -1,6 +1,5 @@
 ---
 title: '(DATA151) Working with Categorical Data : Tables and Bars'
-author: "Kitada Smalley"
 output: 
   html_document:
     toc: true
@@ -52,7 +51,7 @@ What order are the factors currently in? Check the levels
 ```{r}
 ## CHECK THE LEVELS 
 
-## INSERT CODE HERE ##
+levels(immigration$political)
 ```
 
 
@@ -105,8 +104,10 @@ Let’s visualize this distribution.
 
 ```{r}
 # create a graph to display the distribution
-## INSERT CODE HERE ##
+ggplot(immigration, aes(x=political))+
+  geom_bar()
 ```
+
 #### B. Color
 
 Since bars are two dimensional the color aesthetic only outlines bars.
@@ -115,36 +116,45 @@ What is going on in this graph?
 
 ```{r}
 ## ADD COLOR
-## INSERT CODE HERE ##
+ggplot(immigration, aes(x=political, color=political))+
+  geom_bar()
 ```
 
 #### C. Fill
 
 ```{r}
 ## OOPS! Let's use fill!
-## INSERT CODE HERE ##
+ggplot(immigration, aes(x=political, fill=political))+
+  geom_bar()
 ```
 
 #### D. Proportions 
 
 ```{r}
 ## CHANGE Y-AXIS TO PERCENT
-## INSERT CODE HERE ##
+ggplot(immigration, aes(x=political, fill=political))+
+  geom_bar(aes(y = (..count..)/sum(..count..)))
   
 ```
+
 #### E. Recipe for a Pie Chart
 
 **STEP 1**: Make a stacked bar graph. 
 
 ```{r}
 ## STEP 1: MAKE A STACKED-BAR GRAPH
-## INSERT CODE HERE ##
+ggplot(immigration, aes(x=1, fill=political))+
+  geom_bar()
 ```
+
 **STEP 2**: Use polar coordinates
 
 ```{r}
 ## PLOT IT IN A CIRCLE
-## INSERT CODE HERE ##
+ggplot(immigration, aes(x=1, fill=political))+
+  geom_bar()+
+  coord_polar("y", start=0)+
+  theme_void()
 ```
 
 ### Learning by Doing! 
@@ -217,6 +227,7 @@ kable(tabPolResp)
 ggplot(data=immigration, aes(x=political, fill=response))+
   geom_bar()
 ```
+
 #### B. Side-by-side Bar Graph
 
 We can use position adjustments to change the type of bar graph. 
