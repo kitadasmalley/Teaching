@@ -1,0 +1,402 @@
+---
+title: '(DATA151) Working with Categorical Data : Tables and Bars'
+author: "Kitada Smalley"
+output: 
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+---
+
+### Learning Objectives
+
+In this lesson students will learn to apply categorical data analysis methods to data sets with fundamentally different structures. 
+
+* Work with individual and cross-tabulated level raw data
+* Create univarite tables to show marginal distributions 
+* Create two-way tables to show joint and conditional distributions
+* Create bar graphs and assess which type of bar graph is best for a given scenario (stacked, dodged, filled)
+
+
+The `tidyverse` package is needed for these examples
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+
+
+### Example #1: Immigration Politics
+
+Nine-hundred and ten (910) randomly sampled registered voters from Tampa, FL were asked if they thought workers who have illegally entered the US should be (i) allowed to keep their jobs and apply for US citizenship, (ii) allowed to keep their jobs as temporary guest workers but not allowed to apply for US citizenship, or (iii) lose their jobs and have to leave the country. The results of the survey by political ideology are shown below.
+
+From Questions from Introduction to Modern Statistics.
+
+### Step 0: Install the package
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("openintro")
+library(openintro)
+```
+
+### Step 1: Load the Data 
+
+```{r}
+data("immigration")
+str(immigration)
+```
+
+What order are the factors currently in? Check the levels
+
+```{r}
+## CHECK THE LEVELS 
+
+## INSERT CODE HERE ##
+```
+
+
+### Step 2: Re-level categories
+
+By default R will order a variable alphabetically, but we might not want that. 
+
+```{r}
+immigration$political<-as.character(immigration$political)
+immigration$political<-factor(immigration$political, 
+                              levels = c("conservative","moderate", "liberal"))
+
+```
+
+In this dataset the rows represent individuals.  In the following example we will learn how to use the `table` and  `prop.table` functions. 
+
+### Step 3: One-way Table
+
+Create a one-way frequency table for the distribution of political affiliation 
+
+**Motivating Question 1**: What percent of these Tampa, FL voters identify themselves as conservatives? 
+```{r}
+# Table for Political affiliation
+# use table() function
+tabPol<-table(immigration$political)
+tabPol
+```
+
+We can also use `kable` to make tables in R markdown:
+
+```{r}
+library(knitr)
+kable(tabPol, col.names = c('Party', 'Count'),
+      caption = "Distribution of Political Indentities")
+```
+
+### Step 4: Relative Frequency Table
+
+We might also want to display proportions.
+
+```{r}
+# the prop.table() function must take a table object
+prop.table(tabPol)
+```
+
+### Step 5: Univariate Bar Graphs
+Let’s visualize this distribution.
+
+#### A. Simple/Vanilla Bar Graph 
+
+```{r}
+# create a graph to display the distribution
+## INSERT CODE HERE ##
+```
+#### B. Color
+
+Since bars are two dimensional the color aesthetic only outlines bars.
+
+What is going on in this graph?
+
+```{r}
+## ADD COLOR
+## INSERT CODE HERE ##
+```
+
+#### C. Fill
+
+```{r}
+## OOPS! Let's use fill!
+## INSERT CODE HERE ##
+```
+
+#### D. Proportions 
+
+```{r}
+## CHANGE Y-AXIS TO PERCENT
+## INSERT CODE HERE ##
+  
+```
+#### E. Recipe for a Pie Chart
+
+**STEP 1**: Make a stacked bar graph. 
+
+```{r}
+## STEP 1: MAKE A STACKED-BAR GRAPH
+## INSERT CODE HERE ##
+```
+**STEP 2**: Use polar coordinates
+
+```{r}
+## PLOT IT IN A CIRCLE
+## INSERT CODE HERE ##
+```
+
+### Learning by Doing! 
+
+**Motivating Question 2**: What percent of Tampa, FL voters are in favor of the citizenship option?
+
+In small groups work together to answer the question above, by doing the following tasks.
+
+  1. Make a one-way table for the responses to the citizenship option.
+```{r}
+# Table for citizenship response
+# use table() function
+## INSERT CODE HERE ##
+
+# kable 
+## INSERT CODE HERE ##
+```
+  2. Make a relative frequency table.
+```{r}
+# use prop.table() 
+## INSERT CODE HERE ##
+```
+
+  3. Make a univariate bar graph for the response options. 
+```{r}
+# create a graph to display the distribution
+## INSERT CODE HERE ##
+```
+
+  4. Make a stacked bar graph of the response options. 
+```{r}
+# stacked bar graph
+## INSERT CODE HERE ##
+```
+
+  5. Make a pie chart.
+```{r}
+# pie graph
+## INSERT CODE HERE ##
+```
+
+### Step 6. Two-way Tables
+
+**Motivating Question 3**:
+
+What percent of these Tampa, FL voters identify themselves as conservatives and are in favor of the citizenship option?
+
+```{r}
+## conservative and citizen
+# Row then col
+#tabPolResp<-## INSERT CODE HERE ##
+#tabPolResp
+
+## kable
+## INSERT CODE HERE ##
+```
+### Step 7: Bar Graphs with two dimensions
+
+#### A. Stacked Bar Graph
+
+```{r}
+## Stacked Bar Graph (Default)
+## INSERT CODE HERE ##
+```
+#### B. Side-by-side Bar Graph
+
+We can use position adjustments to change the type of bar graph. 
+
+```{r}
+## Side-by-side Bar Graph 
+## INSERT CODE HERE ##
+```
+
+
+### Step 8: Types of Distributions
+
+#### A. Joint Distribution
+
+**Definition**: The probability distribution on all possible pairs of outputs.
+
+```{r}
+## Joint Distribution
+#jointD<-## INSERT CODE HERE ##
+#jointD
+```
+
+**Note**: The sum of any proper distribution is 1.
+
+```{r}
+## NOTE: The sum of any distribution is 1
+## INSERT CODE HERE ##
+```
+
+We can also do this with `kable`
+
+```{r}
+## kable
+## INSERT CODE HERE ##
+
+```
+#### B. Marginal Distribution
+
+**Definition**: Gives the probabilities of various values of the variable without reference to the values of the other variable.
+
+```{r}
+## Marginal Distribution of Political Affiliation
+## Row Sums (ie sum over the cols)
+## INSERT CODE HERE ##
+
+## Observe: This matches with 
+## INSERT CODE HERE ##
+
+```
+#### Learning by Doing! 
+
+How would you find the marginal distribution of response to the citizenship option by using the joint distribution?
+
+```{r}
+## INSERT CODE HERE
+## Marginal Distribution of Response
+## Col Sums (ie sum over the rows)
+## INSERT CODE HERE ##
+
+## Observe: This matches with 
+## INSERT CODE HERE ##
+```
+
+#### C. Conditional Distribution
+
+**Definition**: A probability distribution that describes the probability of an outcome given the occurrence of a particular event.
+
+**Motivating Question 4**: What percent of these Tampa, FL voters who identify themselves as conservatives are also in favor of the citizenship option? What percent of moderates share this view? What percent of liberals share this view?
+
+```{r}
+## Conditional Distr (Given the row dim)
+## margin = 1 for row
+#marg1<-## INSERT CODE HERE ##
+#marg1
+
+## Observe that this is a proper distribution
+## INSERT CODE HERE ##
+```
+We can visualize conditional distributions with a different position adjustment. 
+
+```{r}
+## FILLED BAR GRAPH
+## INSERT CODE HERE ##
+```
+
+### Learning by Doing!
+
+Does it make sense to condition in the other direction?  
+
+We could describe conditioning on the column dimension as, if we randomly selected a respondent who supported application for citizenship, what is the probability that they belonged to a particular political party? 
+
+```{r}
+## Conditional Distr (Given the col dim)
+## margin = 2 for col
+#marg2<-## INSERT CODE HERE ##
+#marg2
+```
+Your turn!  
+
+  1. Check that this conditional distribution is proper.
+  
+```{r}
+## INSERT CODE HERE
+## INSERT CODE HERE ##
+```
+  
+  2. Make a filled bar graph that shows this conditional distribution. 
+  
+```{r}
+## INSERT CODE HERE
+## INSERT CODE HERE ##
+```
+  
+### Step 9: Cross-tabulated Data
+
+Cross tabulated data shows the number of respondents that share a combination of characteristics or demographics.  This is a common format for survey data, which greatly reduces the size of a dataset. 
+
+```{r}
+## CROSS TABULATED DATA
+#crossTab<-## INSERT CODE HERE ##
+
+#crossTab
+```
+
+Graphics can also be made with cross-tabulated data. 
+
+```{r}
+## Now we need to specify the height 
+## We are using color here to see how the bars are composed 
+## INSERT CODE HERE ##
+
+```
+
+Let's try fill now. 
+
+```{r}
+## Fill with color
+## INSERT CODE HERE ##
+```
+Make filled bar graphs. 
+
+```{r}
+## Filled bar graphs with cross-tab data
+## INSERT CODE HERE ##
+```
+
+### CAUTION
+
+It's generally NOT advised to use pie charts to make comparisons across distributions! 
+
+```{r}
+## Comparing Pies
+## INSERT CODE HERE ##
+```
+
+
+### Example #2: Gender Bias
+
+In 1973, UC Berkeley became "one of the first universities to be sued for sexual discrimination" (with a statistically significant difference)
+
+#### Step 1: Load the data
+
+```{r}
+## UC Berk
+data(UCBAdmissions)
+str(UCBAdmissions)
+```
+
+#### Step 2: Reformat as data.frame
+
+```{r}
+cal<-as.data.frame(UCBAdmissions)
+```
+
+#### Step 3: Aggregated Bar Graph
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+#### Step 4: Separated by Department
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+#### Simpson's Paradox
+
+*How does this happen?*
+
+“The simple explanation is that women tended to apply to the departments that are the hardest to get into, and men tended to apply to departments that were easier to get into. (Humanities departments tended to have less research funding to support graduate students, while science and engineer departments were awash with money.) So women were rejected more than men. Presumably, the bias wasn’t at Berkeley but earlier in women’s education, when other biases led them to different fields of study than men.”
