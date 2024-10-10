@@ -1,0 +1,101 @@
+---
+title: "DATA 151: Project Milestone #4"
+author: "INSERT GROUP MEMBERS HERE"
+date: "DATE HERE"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Creating Tables and Bar Graphs
+
+
+### STEP 0: Import the data
+
+
+```{r}
+## CALL THE DATA IN 
+
+## INSERT CODE HERE ##
+```
+
+
+### PART 1: Motivating Question 1
+
+State a question of interest for one categorical variable. 
+
+STATE YOUR QUESTION OF INTEREST HERE. 
+
+### STEP 1: One-way Table (One Categorical Variable)
+
+```{r}
+## MAKE A ONE-WAY TABLE
+
+## INSERT CODE HERE ##
+```
+
+### STEP 2: Bar Graph
+
+```{r}
+## MAKE A UNIVARIATE BAR GRAPH
+
+## INSERT CODE HERE ##
+```
+
+### STEP 3: Pie Chart
+
+```{r}
+## MAKE A PIE CHART
+
+## INSERT CODE HERE ##
+```
+
+### STEP 4: Discuss your findings
+
+PLEASE DISCUSS YOUR FINDINGS HERE
+
+### PART 2: Motivating Question 2
+
+State a question of interest exploring the relationship between two categorical variables
+
+STATE YOUR QUESTION OF INTEREST HERE. 
+
+### STEP 1: Two-way Table (Two Categorical Variables)
+
+```{r}
+## MAKE A TWO-WAY TABLE
+
+## INSERT CODE HERE ##
+```
+
+### STEP 2: Stacked Bar Graph
+
+```{r}
+## MAKE A STACKED BAR GRAPH
+
+## INSERT CODE HERE ##
+```
+
+### STEP 3: Side-by-side Bar Graph
+
+```{r}
+## MAKE A SIDE-BY-SIDE BAR GRAPH
+
+## INSERT CODE HERE ##
+```
+
+### STEP 4: Filled Bar Graph
+
+What is the connection to the conditional distribution? 
+
+```{r}
+## MAKE A FILLED BAR GRAPH
+
+## INSERT CODE HERE ##
+```
+
+### STEP 5: Discuss your findings
+
+PLEASE DISCUSS YOUR FINDINGS HERE
