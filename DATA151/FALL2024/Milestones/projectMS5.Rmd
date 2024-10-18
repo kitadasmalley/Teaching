@@ -1,0 +1,94 @@
+---
+title: "DATA 151: Project Milestone #5"
+author: "INSERT GROUP MEMBERS HERE"
+date: "DATE HERE"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Distributions, Summary Statistics, and Comparing Subgroups
+
+
+### STEP 0: Import the data
+
+
+```{r}
+## CALL THE DATA IN 
+
+## INSERT CODE HERE ##
+```
+
+
+### PART 1: Motivating Question 1
+
+State a question of interest for one numeric variable
+
+STATE YOUR QUESTION OF INTEREST HERE. 
+
+### STEP 1: Create a histogram to show a numeric distribution. Try different numbers of bins.
+
+```{r}
+## MAKE HISTOGRAM
+
+## INSERT CODE HERE ##
+```
+
+### STEP 2: Create a boxplot to show a numeric distribution.
+
+```{r}
+## MAKE A BOXPLOT
+
+## INSERT CODE HERE ##
+```
+
+### STEP 3: Create a density to show a numeric distribution.
+
+```{r}
+## MAKE A DENSITY PLOT
+
+## INSERT CODE HERE ##
+```
+
+### STEP 4: Discuss your findings
+
+Describe the shape of the distribution
+  * Skew vs symmetry, 
+  * Modes (unimodal or multimodal)
+  * Outliers
+
+PLEASE DISCUSS YOUR FINDINGS HERE
+
+### STEP 5: Summary statistics
+
+```{r}
+## SUMMARY STATISTICS
+# If skewed, give median and quartiles
+# If roughly symmetric, give mean and sd
+
+## INSERT CODE HERE ##
+```
+
+
+### PART 2: Motivating Question 2
+
+State a question of interest exploring the relationship between one numeric variables and one categorical variable
+
+STATE YOUR QUESTION OF INTEREST HERE. 
+
+### STEP 1: Side-by-Side Box Plot
+
+Create graphic showing subgroups (ie showing how a numeric distribution may vary depending on a categorical variable)
+
+```{r}
+## MAKE A TWO-WAY TABLE
+
+## INSERT CODE HERE ##
+```
+
+
+### STEP 2: Discuss your findings
+
+PLEASE DISCUSS YOUR FINDINGS HERE
