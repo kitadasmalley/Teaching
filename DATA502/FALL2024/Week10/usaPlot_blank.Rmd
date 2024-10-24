@@ -1,0 +1,109 @@
+---
+title: 'DataViz: United States Map Demo'
+author: "INSERT NAME HERE" 
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Code UPDATED in Fall 2024 Due to change in package
+
+### Motivating Example: 
+
+In this demo we will be looking voter turn out data from IPUMS from 2016 and 2018. 
+
+```{r}
+## LOAD IN VOTER TURN-OUT DATA
+vote<-read.csv("https://raw.githubusercontent.com/kitadasmalley/DATA502/main/FALL2021/Data/voterTurnOut1618.csv",
+              header=TRUE, 
+              stringsAsFactors = FALSE)
+
+## CHECK STRUCTURE
+str(vote)
+
+## CHANGE STATE NAMES TO LOWER CASE
+## THIS WILL HELP WITH MATCHING LATER
+
+## INSERT CODE HERE ##
+
+## CHECK THE OUTPUT
+
+## INSERT CODE HERE ##
+
+```
+
+### Step 1: State Polygons 
+
+Import the shapes using the `usmaps` package:
+
+```{r}
+## MAPS PACKAGE
+#install.packages("maps")
+library(maps)
+library(tidyverse)
+
+## CALL THE IN THE STATE COORDINATES
+states <- map_data("state")
+
+## WHAT DOES THE OUTPUT LOOK LIKE?
+
+## INSERT CODE HERE ##
+
+```
+
+
+
+### Step 2: Joining
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+
+## JOIN THE MAP DATA WITH THE DATA FRAME
+
+## INSERT CODE HERE ##
+
+```
+
+### Step 3: Plot with `ggplot`
+
+#### A) Default coloring
+```{r}
+## LETS LOOK AT THE ELECTION YEAR
+this.year=2016
+
+## YOU CAN PIPE INTO A GGPLOT
+## FILTER
+## NOTE THAT GROUP IS NEEDED TO HAVE THE PROPER CONNECTIONS 
+
+## INSERT CODE HERE ##
+```
+
+#### B) Color accessible
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("viridis")
+library(viridis)
+
+## SCALE FOR VIRIDIS PACKAGE
+
+## INSERT CODE HERE ##
+```
+
+#### C) Basic Interaction with `plotly`
+
+```{r warning=FALSE, message=FALSE}
+#install.packages("plotly")
+library(plotly)
+
+## SAVE THE GGPLOT OBJECT
+
+## INSERT CODE HERE ##
+
+#p
+
+## GGPLOT OBJECT IS AN INPUT TO PLOTLY
+
+## INSERT CODE HERE ##
+```
