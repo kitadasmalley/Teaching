@@ -1,0 +1,117 @@
+---
+title: 'DataViz: Interactive Map Activity'
+author: "YOUR NAME HERE"
+output: html_document
+---
+
+
+### Step 1: Connect to the Census API
+
+First you will need to get a API key: <https://api.census.gov/data/key_signup.html>
+
+Once you have an API key load it into your R environment so that you can access the ACS data.
+
+```{r}
+#install.packages("tidycensus")
+library(tidycensus)
+
+# YOUR CODE SHOULD LOOK LIKE THIS
+# census_api_key("INCLUDE YOUR API HERE")
+```
+
+```{r echo=FALSE}
+census_api_key("fbf65ba295ce81cab0a2eccd52d62ca564bf896b")
+```
+
+### Step 2: Variables available
+
+Many many variables are included in the ACS. The ACS has 1 and 5 year estimates. Use the following code to see what variables are available. 
+
+TASK: 
+Pick a year and look at what estimates are available from the ACS 5-year estimates. 
+
+```{r}
+# Set a year of interest
+this.year = 2010
+
+# This looks at the 5 year estimates
+# You can also do "acs1"
+vars <- load_variables(year = this.year,
+                      dataset = "acs5",
+                      cache = TRUE)
+
+# HOW MANY?
+dim(vars)
+```
+
+Explore several possible explantory variables from the American Community Survey (ACS) including:
+
+* B02001_001: Total
+* B03002_003: White alone (Not Hispanic or Latino)
+* B03002_004 Black or African American alone (Not Hispanic or Latino)
+* B03002_012: Hispanic or Latino
+* B03002_005: Native American alone (Not Hispanic or Latino)
+* B03002_006: Asian alone (Not Hispanic or Latino)
+* B03002_007: Native Hawaiian or Pacific Islander alone (Not Hispanic or Latino)
+* B03002_009: Multiple Races (Not Hispanic or Latino)
+* B03002_008: Other (Not Hispanic or Latino)
+* B25064_001 MEDIAN GROSS RENT
+* B25071_001: Rent Burden (MEDIAN GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME)
+* B19013_001: MEDIAN HOUSEHOLD INCOME IN PAST 12 MONTHS
+* B01002_001: Median age
+* B25115_016: Renter Occupied - family
+* B25115_027: Renter Occupied - nonfamily
+
+### Step 3: Pick an Variable and a State
+```{r}
+## EXAMPLE
+# MEDIAN HOME VALUE
+orMedv <- get_acs(geography = "tract", year=this.year,
+               state = "OR", #county = "Marion",
+               variables = "B25077_001E", 
+               geometry=TRUE)
+
+head(orMedv)
+```
+
+
+
+
+### Step 4: Create a Map in Leaflet
+
+TASKS: 
+- Pick a color palette (change it from the one provided)
+- Change the pop-up text
+
+```{r}
+#install.packages("leaflet")
+library(leaflet)
+library(tidyverse)
+
+
+## WHAT TYPE OF COLOR PALETTE?
+## Continuous?
+pal<-colorNumeric("Greens", domain=0:ceiling(max(orMedv$estimate, na.rm=TRUE)))
+## Quantile?
+qpal<-colorQuantile("viridis", domain=orMedv$estimate,
+                       n=5,na.color="#FFFFFF")
+
+## CHANGE THE POP-UP TEXT
+## TRY ADDING A LINE
+popup<-paste("Tract: ", as.character(substring(orMedv$GEOID, 6, 11)), "<br>",
+             "Median Home Value: ", as.character(orMedv$estimate))
+
+leaflet()%>%
+  addProviderTiles("CartoDB.Positron")%>%
+  addPolygons(data=orMedv,
+              fillColor= ~qpal(orMedv$estimate),
+              fillOpacity = .7,
+              weight =.5,
+              smoothFactor = 0.2,
+              popup = popup)%>%
+      addLegend("bottomright", pal=qpal, values=orMedv$estimate,
+                opacity = .7,
+                title="Percentiles")
+
+```
+
