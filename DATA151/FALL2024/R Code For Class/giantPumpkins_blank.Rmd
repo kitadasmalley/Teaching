@@ -1,0 +1,179 @@
+---
+title: 'FALL 2024 DATA151: Midterm #2 (R Section)'
+author: "STUDENT NAME"
+date: "TODAYS DATE"
+output: pdf_document
+---
+  
+
+### GIANT Pumpkins! (30 Points Total)
+
+Please read ALL descriptions and directions.  For full points, use complete sentences when discussing your findings.  
+
+#### Description: 
+
+The mission of the Great Pumpkin Commonwealth (GPC) cultivates the hobby of growing giant pumpkins, as well as other super-sized vegetables, by establishing standards and regulations that ensure quality of fruit, fairness of competition, recognition of achievement, fellowship and education for all participating growers and weigh-off sites.
+
+Citations: 
+
+- Guinness World Records <https://www.guinnessworldrecords.com/>
+- Tidy Tuesday <https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-10-19/readme.md>
+- West Coast Giant Pumpkin Regatta <https://www.tualatinoregon.gov/pumpkinregatta>
+
+  
+
+#### Part 0: Getting Started (5 points - 1 point each!)
+
+* Create a new R markdown document for the Midterm template 
+* Create a folder called "MIDTERM_2"
+* Save new Rmd in your R Studio Cloud as "data151_mid2_YOURNAME"
+* Change the author and date in the heading of the R markdown
+* Leave yourself at least 3 comments (total) in your code chunks
+
+#### Part 1: Loading the Tidyverse Library 
+
+In this part of the assessment you will demonstrate your knowledge of dplyr verbs that are within the tidyverse package.  
+```{r}
+library(tidyverse)
+```
+
+#### Part 2: Calling in the Data 
+
+For the exercise you will important the data from my github account using the URL provided.  
+
+The documentation for data shows there is a column called ID which contains information about the Year and Type.  We would like these to be two separate columns for the following analysis.  Note that I have provided this code to show you how you can use the separate function in tidyr to accomplish this task. 
+
+
+```{r}
+## CALL IN THE DATA
+pumpkins<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/ProjectData/pumpkins.csv", 
+                   header=TRUE)
+
+## CREATE NEW COLUMNS FOR YEAR AND TYPE 
+pumpkins<-pumpkins%>%
+  separate(id, into=c("YEAR", "TYPE"), sep="-" )
+```
+
+The Great Pumpkin Commonwealth (GPC) hosts several competitions for "super-size vegetables".  The new variable we made called TYPE has the following codes: 
+
+- F = "Field Pumpkin"
+- P = "Giant Pumpkin"
+- S = "Giant Squash"
+- W = "Giant Watermelon"
+- L = "Long Gourd" (length in inches, not weight in pounds)
+- T = Tomato
+
+#### Part 3: Structure (3 total points)
+
+
+Look at the structure of the dataset. (1 points)
+
+```{r}
+## INSERT CODE HERE ###
+```
+
+What might be problematic about the way the variable weight_lbs is formatted? (2 points)
+
+
+HINT: How could this cause problems if we wanted to calculate statistics?
+
+```{}
+SPACE FOR YOUR ANSWER:
+```
+
+
+#### Part 4: Coerce to Numerics  (2 total points)
+
+Coerce the variables for YEAR and weight_lbs to be numeric.  Do this by overwriting the respective columns in the pumpkins dataframe (using base R) and the appropriate wrapper function. 
+
+Variable Descriptions: 
+
+- YEAR : Year of competition 
+- weight_lbs : Weight in pounds (lbs)
+
+```{r}
+## YEAR
+## INSERT CODE HERE ###
+
+## WEIGHT_LBS
+## INSERT CODE HERE ###
+
+## CHECK YOUR WORK!
+## LOOK AT THE STR TO MAKE SURE ITS CORRECT
+## INSERT CODE HERE ###
+```
+
+#### Part 5: Data Wrangling Weight (5 points)
+
+#### STEPS: 
+
+- Create a new data frame that does NOT contain Long Gourds.  Since Long Gourds are not recorded in pounds but in inches, it would not be fair to compare these metrics. 
+
+- Within this new data frame, create a new column that convert pounds (lbs) to kilograms.  Call this new column weight_kg.  The conversion factor from pounds to kilograms is approximately 0.45. 
+
+NOTE: For full points, use dplyr verbs to accomplish these tasks. 
+
+```{r}
+## PART 5: NO LONG GOURDS and WEIGHT_KG
+## INSERT CODE HERE ###
+```
+
+
+##### Part 6: Weigh-off! (5 points)
+
+Using the data frame you created in the previous step, find the mean and standard deviation of the weight in kilograms for each type of "super-sized" vegetable.  Order the data frame from largest to smallest average weight in kilograms.
+
+Discuss your findings:  Which vegetable has the highest average weight in kilograms?
+
+BE CAREFUL!  There are NAs in these data!
+
+NOTE: For full points, use dplyr verbs to accomplish these tasks. 
+
+```{r}
+## PART 6: MEAN AND STANDARD DEV FOR EACH TYPE
+## BIGGEST TO SMALLEST
+## INSERT CODE HERE ###
+
+## DISCUSS YOUR FINDINGS
+### HEAVIEST
+```
+
+##### Part 7: Visualize it! (5 points)
+
+Create a side-by-side bar graph (using the data frame from Part 5 without the Long Gourds) to compare the weight in kilograms across the different types.  
+
+Discuss your findings: How to the ranges of the distributions compare?  Are there any clear outliers?  Do any of the distributions appear to be skewed?  How can you tell? 
+```{r}
+## SIDE-BY-SIDE BAR GRAPH
+## INSERT CODE HERE ###
+
+## DISCUSS YOUR FINDINGS
+### COMPARE RANGES?
+### OUTLIERS?
+### SKEW?
+```
+
+##### Part 8:Oregon Pumpkin Boats (5 points)
+
+Oregon is famous for the West Coast Giant Pumpkin Regatta (in Tualatin).  Since 2004 people from around the country have gathered to watch costumed characters paddle giant pumpkin boats in a series of races.
+
+According to Super STEM Magazine by Scholastic: 
+
+A good pumpkin boat should weigh around 450 pounds before carving. However, the weight limit for pumpkin boats can vary by race. For example, Damariscotta's festival limits pumpkin boats to 700 pounds. Oval-shaped pumpkins are said to move through the water better, and smaller pumpkins are faster.
+
+YOUR TASK: 
+How many Giant Pumpkins, grown in Oregon, could be suitable to make a pumpkin boat (more than 450 pounds but less than 700 pounds)?
+
+HINT: The variable state_prov should be used.
+
+```{r}
+## PART 8: PARAMETERS
+### Giant Pumpkin
+### Grown in Oregon 
+### Between 450 and 700 pounds (inclusive)
+
+## INSERT CODE HERE ###
+
+## ANSWER (in complete sentence) 
+```
+
