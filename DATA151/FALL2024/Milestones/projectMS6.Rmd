@@ -1,0 +1,83 @@
+---
+title: 'DATA 151: Project Milestone #6'
+author: "INSERT GROUP MEMBERS HERE"
+date: "DATE HERE"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Relationships Between Two Numeric Variables
+
+
+### STEP 0: Import the data
+
+
+```{r}
+## CALL THE DATA IN 
+
+## INSERT CODE HERE ##
+```
+
+
+### Motivating Question 
+
+State a question of interest for relationships between two numeric variables.
+Identify a numeric response variable in your dataset and a numeric explanatory variable.
+
+STATE YOUR QUESTION OF INTEREST HERE. 
+
+### STEP 1: Create a scatter plot.
+
+For full points, make sure to label the axes and give the plot a title
+
+```{r}
+## MAKE A SCATTERPLOT
+
+## INSERT CODE HERE ##
+```
+
+### STEP 2: Describe the relationship between two numeric variables
+
+  - Direction
+  - Form 
+  - Strength 
+  - Outliers 
+
+### STEP 3: Add a smooth to the scatter plot 
+
+Using method="lm"
+
+```{r}
+## ADD THE SMOOTH TO YOUR SCATTPLOT
+
+## INSERT CODE HERE ##
+```
+
+### STEP 4: Fit a line of best fit to your data using the lm function. 
+
+Write the equation for the line.
+
+```{r}
+## LM
+## INSERT CODE HERE ##
+
+## TYPE EQUATION HERE
+```
+
+
+### Bonus points: Include a categorical variable to color your plot and look for subgroupings
+
+Should have two numeric variables (x and y) and one categorical variable for color
+
+```{r}
+## BONUS
+
+## INSERT CODE HERE ##
+```
+
+
