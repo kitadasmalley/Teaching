@@ -1,0 +1,104 @@
+---
+title: "FALL 2024 - DataViz Midterm #2 - Part #3: Recreate"
+author: "INSERT NAME HERE"
+date: "DATE HERE"
+output: html_document
+---
+
+### STEP 1: Visit the Oregon School Immunization Coverage (ArcGIS Map) for Preschools and childcare 
+
+<https://geo.maps.arcgis.com/apps/webappviewer/index.html?id=ea1c78a745c845d899a0184f3581a2ff>
+
+### STEP 2: Load the 2023 - 2024 data into the R
+
+```{r}
+## FA24 DATA 502
+## COUNTY LEVEL DATA
+county<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/ProjectData/countyImmRate.csv")
+#str(county)
+
+## VACCINE DATA FOR PRESCHOOLS
+ps <- read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/ProjectData/Preschool%20_%20Child%20Care.csv")
+
+#View(ps)
+
+## NEEDS TO BE NUMERIC
+ps$Per_Vac_AllVac<-as.numeric(ps$Per_Vac_AllVac)
+#str(ps)
+```
+
+### STEP 3: Load maps package and map data
+
+```{r}
+library(tidyverse)
+
+## MAPS
+#install.packages("maps")
+library(maps)
+
+## LOAD MAP DATA
+### INSERT CODE HERE ###
+```
+
+### STEP 4: Join the map data to the vaccine data
+
+```{r}
+## JOIN MAPS AND DATA
+### INSERT CODE HERE ###
+```
+
+### STEP 5: Recreate the choropleth map
+
+```{r}
+## USE geom_polygon() or geom_sf()
+### INSERT CODE HERE ###
+```
+
+### STEP 6: Add layer for school points
+
+```{r}
+## ADD LAYER OF POINTS 
+### INSERT CODE HERE ###
+```
+
+### STEP 7: Color Palettes
+```{r}
+## COLOR
+# install.packages("colorspace")
+library(colorspace)
+hcl_palettes(plot = TRUE)
+```
+
+### STEP 8: Apply scales, themes, and guides to polish your graphic
+
+```{r}
+## POLISH
+### INSERT CODE HERE ###
+```
+
+
+### STEP 9: Extra Credit for Interactivity
+
+```{r}
+## INTERACTION
+### INSERT CODE HERE ###
+```
+
+
+### STEP 10: Extra Extra Credit for Ordering for Overlap
+
+```{r}
+## ORDER
+### INSERT CODE HERE ###
+```
+
+### STEP 11: Make an alternative
+
+Create an alternative that improves some aspect(s) of the graphic using best practices (improving on perception and/or color theory)
+
+
+```{r}
+## ALTERNATIVE
+### INSERT CODE HERE ###
+```
+
