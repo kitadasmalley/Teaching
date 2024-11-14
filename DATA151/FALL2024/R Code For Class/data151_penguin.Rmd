@@ -1,0 +1,273 @@
+---
+title: '(DATA151) EDA with Palmer Penguins'
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+In this lesson students will learn to apply categorical data analysis methods to data sets with fundamentally different structures. 
+
+* Wrangle different types of data using base R and Tidyverse functions in R.
+* Implement exploratory data analysis techniques in R, including the following:
+  * Data visualization using ggplot
+  * Numerical data analysis (measures of central tendency, measures of precision & uncertainty, quantiles)
+  * Categorical data analysis (proportions)
+* Perform a simple linear regression analysis and interpret the results in context of the problem
+
+
+
+The `tidyverse` package is needed for these examples
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+## Palmer Penguins
+
+The Palmer penguins dataset is a collection of body measurements for three penguin species that live on islands in the Palmer Archipelago in Antarctica: 
+
+* Species: Adélie, Chinstrap, and Gentoo 
+* Measurements: Bill length, bill depth, flipper length, body mass, island, sex, and year 
+* Dataset creator: Dr. Kristen Gorman and the Palmer Station Long Term Ecological Research (LTER) team 
+* Purpose: To study the relationship between Antarctic penguins' foraging behavior and environmental variability
+
+
+### STEP 1: R Package
+
+Install the R package and call it into your R environment.
+
+```{r}
+## INSTALL PACKAGE
+#install.packages("palmerpenguins")
+
+## LOAD THE LIBRARY
+library(palmerpenguins)
+
+## DATA
+data("penguins")
+```
+
+### STEP 2: Look at the Data
+
+Check out the structure of the data and take a look at it.
+
+```{r}
+## STRUCTURE 
+str(penguins)
+
+## HEAD, TAIL, OR VIEW
+head(penguins)
+```
+
+Questions of interest: 
+
+* How many penguins are in these data?
+* What variables are included?  Are they numeric or categorical?
+
+```{}
+SPACE FOR ANSWERS:
+```
+
+
+## PART A: EDA for Categorical Variables
+
+### STEP 3: One-way Tables and Bar Graphs
+
+Make a table to show how many penguins there are of each species. 
+
+```{r}
+## ONE WAY TABLE FOR SPECIES
+table(penguins$species)
+```
+
+What are your observations?
+
+```{}
+SPACE FOR ANSWERS:
+```
+
+Now make a bar Graph using ggplot2.
+
+```{r}
+## CUSTOM COLOR PALETTE
+penCol<-c("darkorange","purple","cyan4")
+
+## BAR GRAPH
+ggplot(data = penguins, aes(x=species, fill=species))+
+  geom_bar()+
+  scale_fill_manual(values=penCol)
+```
+
+### STEP 4: Two-way Tables, Distributions, and Bar Graphs
+
+Make a two-way table to show how many penguins there are of each species on each island. 
+
+```{r}
+## TWO WAY TABLE FOR SPECIES and ISLAND
+tab2<-table(penguins$species, penguins$island)
+tab2
+```
+
+Create a stacked bar graph to to show the total number of penguins from each island represented in the data set.  Fill by species. 
+
+```{r}
+## STACKED BAR GRAPH
+ggplot(data = penguins, aes(x=island, fill=species))+
+  geom_bar()+
+  scale_fill_manual(values=penCol)
+```
+
+
+Now use the table to make conditional distributions for 
+
+* 1) Distribution of location, given species 
+* 2) Distribution of species, given location 
+
+```{r}
+## DISTRIBUTION OF LOCATION GIVEN SPECIES
+prop.table(tab2, 1)
+
+## DISTRIBUTION OF SPECIES GIVEN LOCATION
+prop.table(tab2, 2)
+```
+
+Visualize the conditional distribution for species, given location 
+
+```{r}
+## FILLED BAR GRAPH
+ggplot(data = penguins, aes(x=island, fill=species))+
+  geom_bar(position = "fill")+
+  scale_fill_manual(values=penCol)
+```
+
+
+Observations: 
+
+Can this possibly tell you anything about how well different species have adapted to different environments or cohabitating? 
+
+```{}
+SPACE FOR ANSWERS:
+```
+
+## PART B: EDA for Numeric Variables 
+
+### STEP 5: Numeric Summaries
+
+Calculate the means and standard deviations body mass and flipper length for each species.  
+
+```{r}
+## MEANS AND ST DEV
+## BODY MASS AND FLIPPER LENGTH
+## BY SPECIES
+penguins%>%
+  group_by(species)%>%
+  summarise(n=n(),
+            avg_bodyMass=mean(body_mass_g, na.rm=TRUE), 
+            sd_bodyMass=sd(body_mass_g, na.rm=TRUE), 
+            avg_flipperLen=mean(flipper_length_mm, na.rm=TRUE), 
+            sd_flipperLen=sd(flipper_length_mm, na.rm=TRUE))
+
+```
+
+
+### STEP 6: Boxplots, Histograms, and Density Plots 
+
+Create plots to compare flipper length by species.
+
+```{r}
+## BOXPLOT
+ggplot(data=penguins, aes(x=species, y=flipper_length_mm, fill=species))+
+  geom_boxplot()+
+  scale_fill_manual(values=penCol)+
+  theme_minimal()
+
+## HISTOGRAM (OVERLAPPING)
+ggplot(data=penguins, aes(x=flipper_length_mm, fill=species))+
+  geom_histogram(alpha = 0.5, 
+                 position = "identity")+
+  scale_fill_manual(values=penCol)+
+  theme_minimal()
+
+## DENSITY PLOT
+ggplot(data=penguins, aes(x=flipper_length_mm, fill=species))+
+  geom_density(alpha=0.5)+
+  scale_fill_manual(values=penCol)+
+  theme_minimal()
+
+```
+
+
+## PART C: EDA for Relationships Between Two Numeric Variables
+
+Definition: 
+
+Adaptive radiation is a process in evolutionary biology where a single species or small group of species rapidly diversifies into many new species. This process is characterized by the development of ecological and morphological diversity.
+
+Let's explore if the three species have different beak (bill) morphologies.  
+
+### STEP 7: Scatter Plot
+
+Make a scatter plot for the relationship between bill length (x-axis) vs bill depth (y-axis). 
+
+```{r}
+## SCATTERPLOT 
+## X: BILL LENGTH
+## Y: BILL DEPTH
+
+ggplot(data = penguins, aes(x=bill_length_mm, y=bill_depth_mm))+
+  geom_point()+
+  xlab("Bill length (mm)")+
+  ylab("Bill depth (mm)")
+```
+
+Observations: 
+
+```{}
+SPACE FOR ANSWERS:
+```
+
+
+### STEP 8: Exploring Sugroups
+
+```{r}
+## SCATTERPLOT WITH SUBGROUPS 
+## X: BILL LENGTH
+## Y: BILL DEPTH
+## COLOR: Species
+
+ggplot(data = penguins, aes(x=bill_length_mm, y=bill_depth_mm, color=species))+
+  geom_point()+
+  scale_color_manual(values=penCol)+
+  xlab("Bill length (mm)")+
+  ylab("Bill depth (mm)")
+```
+ 
+## PART D: Modeling the Data
+
+### STEP 9: Adding Smooths
+```{r}
+## GEOM_SMOOTH
+ggplot(data = penguins, aes(x=bill_length_mm, y=bill_depth_mm, color=species))+
+  geom_point()+
+  scale_color_manual(values=penCol)+
+  xlab("Bill length (mm)")+
+  ylab("Bill depth (mm)")+
+  geom_smooth(method="lm", se=FALSE)
+```
+
+### STEP 10: Create a Linear Model with Interactions
+
+```{r}
+## LINEAR MOD WITH INTERACTIONS
+mod<-lm(bill_depth_mm~bill_length_mm*species, data=penguins)
+summary(mod)
+```
+
