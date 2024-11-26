@@ -24,7 +24,7 @@ In this lesson students will learn how to create
 
 #### Step 1: Load the Data
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(tidyverse)
 
 npark <- read_csv("https://raw.githubusercontent.com/kitadasmalley/DATA151/main/Data/AllTrails%20data%20-%20nationalpark.csv")
@@ -384,6 +384,40 @@ worldCoffee2%>%
   coord_map("mollweide", xlim=c(-180,180))+
   scale_fill_viridis(option="viridis", direction = 1)+
   theme_map()
+```
+
+#### STEP 5: Number by City
+
+Number of locations within the same city:
+
+```{r}
+## CITIES
+starCities<-starbucks%>%
+  group_by(Country, City)%>%
+  summarise(lat=mean(Latitude), 
+            long=mean(Longitude), 
+            cityStores=n())
+
+#str(worldCoffee2)
+```
+
+#### STEP 6: Add Points
+
+Add points layer to plots 
+
+```{r}
+## ADD POINTS
+worldCoffee2%>% 
+  ggplot() +
+  geom_map(map = world_map, aes(map_id = region, fill=stores)) +
+   geom_point(data=starCities, aes(x=long, y=lat, size=cityStores), alpha=.3)+
+  expand_limits(x = world_map$long, y = world_map$lat) +
+  coord_map("mollweide", xlim=c(-180,180))+
+  theme_map()+
+  scale_fill_viridis(option="viridis", direction = 1)+
+  guides(color = guide_legend(order=1),
+          size = guide_legend(order=2))+
+  theme(legend.position="bottom", legend.box = "vertical")
 ```
 
 ### Example 4: Vaccines in Oregon
