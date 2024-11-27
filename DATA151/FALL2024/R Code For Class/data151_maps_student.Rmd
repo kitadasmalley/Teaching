@@ -1,14 +1,14 @@
 ---
 title: 'DATA 151 BONUS Topic: Maps in R'
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
   html_document:
     collapsed: no
     toc: yes
     toc_depth: 5
     toc_float: yes
-  pdf_document:
-    toc: yes
-    toc_depth: '5'
 ---
 
 ### Learning Objectives
@@ -38,9 +38,9 @@ Group by state to create summaries for metrics within a state.
 ```{r}
 stateNP<-npark%>%
   group_by(state_name)%>%
-  summarise(stateTrails=n(), 
-            avgPop=mean(popularity, na.rm=TRUE), 
-            avgElev=mean(elevation_gain, na.rm=TRUE))
+  summarise(stateTrails=## INSERT CODE HERE ##, 
+            avgPop=## INSERT CODE HERE ##,
+            avgElev=## INSERT CODE HERE ##)
 
 stateNP
 ```
@@ -60,11 +60,11 @@ Let's investigate the data for Oregon.
 
 ##### Points
 ```{r}
+## FILTER FOR OREGON
 oregon<-states%>%
   filter(region=="oregon")
 
-ggplot(oregon, aes(x=long, y=lat))+
-  geom_point()
+## INSERT CODE HERE ##
 ```
 
 These data allow us to play "connect the dots" to draw the shape of the state of Oregon. 
@@ -74,8 +74,7 @@ These data allow us to play "connect the dots" to draw the shape of the state of
 Oh no, what happened? 
 ```{r}
 ## LINE
-ggplot(oregon, aes(x=long, y=lat))+
-  geom_line()
+## INSERT CODE HERE ##
 ```
 
 We need to tell R what order to connect the dots.
@@ -86,8 +85,7 @@ We need to tell R what order to connect the dots.
 
 ```{r}
 ## PATH
-ggplot(oregon, aes(x=long, y=lat))+
-  geom_path()
+## INSERT CODE HERE ##
 ```
 
 ##### Filling in the space
@@ -96,8 +94,7 @@ We can actually think of geographies as generalized polygons!
 
 ```{r}
 ## POLYGON
-ggplot(oregon, aes(x=long, y=lat))+
-  geom_polygon(fill="forestgreen")
+## INSERT CODE HERE ##
 ```
 
 
@@ -128,11 +125,7 @@ Our first map with the standard color scheme.
 ```{r}
 ## OUR FIRST MAP!
 
-stateNP_Map%>%
-  ggplot(aes(x=long, y=lat, group=group, fill=stateTrails))+
-  geom_polygon( color="black")+
-  theme_bw()+
-  coord_map()
+## INSERT CODE HERE ##
 ```
 
 
@@ -232,13 +225,7 @@ Dutch Bros on the west coast.
 #install.packages("viridis")
 library(viridis)
 
-mapDutch%>%
-  ggplot(aes(x=long, y=lat, group = group)) +
-  geom_polygon(aes(fill = n),color="black")+
-  theme_bw()+
-  coord_map()+
-  scale_fill_viridis(option="viridis", direction = 1)+
-  ggtitle("Oregon - Home of Dutch Bros")
+## INSERT CODE HERE ##
 ```
 
 #### STEP 5: Interactivity 
