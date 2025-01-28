@@ -1,0 +1,161 @@
+---
+title: 'DATA429/599: Introduction to PUMS and PUMAs'
+output: 
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+---
+
+### Learning Objectives
+In this lesson students will learn to:
+
+* Work with household level PUMS data from the Census FTP 
+* Aggregate data to the PUMA level 
+* Map PUMAs using the tigris package
+
+### Public Use Microdata Sample (PUMS) 
+
+<https://www.census.gov/programs-surveys/acs/microdata.html> 
+
+In the following example we will use household level data from the 2023 American Community Survey (ACS) in Oregon.  
+
+The data can be accessed from the File Transfer Protocol (FTP) website, <https://www2.census.gov/programs-surveys/acs/data/pums/>.  
+
+For ease of working with the data for this example, you can access the data here: 
+
+```{r}
+## OREGON 2023
+## HOUSEHOLD LEVEL DATA
+or_house<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/DATA/PUMS/Oregon23/psam_h41.csv", 
+                   header=TRUE)
+dim(or_house)
+```
+
+### Public Use Microdata Areas (PUMAs) 
+
+PUMAs are Census created geographic areas that: 
+
+* Must have a minimum population of 100,000 people 
+* May be created by combining two or more contiguous counties 
+* May be created by combining census tracts that cross county boundaries 
+* Entirely inside or outside of metropolitan or micropolitan statistical areas
+* Avoid splitting American Indian reservations and off-reservation trust lands
+* Nest within states or equivalent entities
+
+PUMAs are the most detailed geographic areas available in the ACS PUMS.  They are redrawn after each decennial census. 
+
+#### TIGER/Line Shapefiles 
+
+<https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html>
+
+We will use the `trigis` package, which contains the shapefiles to visualize PUMAs. 
+
+```{r}
+### INSTALL AND LOAD PACKAGE
+#install.packages("tigris")
+library(tigris)
+
+### GET PUMAs for OREGON
+## INSERT CODE HERE ## 
+```
+
+#### STEP 1: Make a PUMA map!
+
+```{r}
+### LIBRARY TIDYVERSE
+library(tidyverse)
+
+### GGPLOT - GEOM_SF
+## INSERT CODE HERE ##
+```
+
+#### Question of Interest 1
+
+How many households from the sample are in each PUMA? 
+
+
+##### STEP 1: Wrangling the Data
+
+First let's filter out the group quarters, since we only want to look at households. 
+
+```{r}
+### FILTER OUT THE GROUP QUARTERS
+## INSERT CODE HERE ## 
+```
+
+Now we will want to count how many households there are in each PUMA.  While we're at it, it might be fun to calculate how many people are in these households, the weighted number of households, and the weighted number of people in those households.  
+
+```{r}
+### HOUSEHOLDS BY PUMA
+## INSERT CODE HERE ## 
+```
+
+##### STEP 2: Join the Data
+
+```{r}
+#### FIX DATA FORMAT
+## INSERT CODE HERE ## 
+
+#### JOIN DATA WITH MAP
+## INSERT CODE HERE ## 
+```
+
+##### STEP 3: Map the Data
+
+```{r}
+### MAP 1
+### NUMBER OF HOUSEHOLDS IN THE SAMPLE BY PUMA
+## INSERT CODE HERE ## 
+```
+
+```{r}
+### MAP 2
+### NUMBER OF PEOPLE IN HOUSEHOLDS IN THE SAMPLE BY PUMA
+## INSERT CODE HERE ## 
+```
+
+```{r}
+### MAP 3
+### WEIGHTED NUMBER OF HOUSEHOLDS BY PUMA
+## INSERT CODE HERE ## 
+```
+
+```{r}
+### MAP 4
+### WEIGHTED NUMBER OF PEOPLE IN HOUSEHOLDS BY PUMA
+## INSERT CODE HERE ## 
+```
+
+#### Question of Interest 2
+
+How many households from the sample have access to internet? 
+
+##### STEP 1: Wrangling the Data
+
+```{r}
+### LETS LOOK AT HOUSEHOLD ACCESS TO INTERNET 
+## INTERNET: ACCESSINET
+## SEE DATA DICTIONARY 
+
+## INSERT CODE HERE ## 
+```
+
+##### STEP 2: Join the Data
+
+```{r}
+#### JOIN DATA WITH MAP
+
+## INSERT CODE HERE ## 
+```
+
+##### STEP 3: Map the Data
+
+```{r}
+### MAP OF INTERNET ACCESS
+
+## INSERT CODE HERE ## 
+```
+
+
