@@ -1,0 +1,171 @@
+---
+title: "DATA429/599: Unit 1 Quiz -  PUMS and PUMAs"
+author: "NAME HERE"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+### Learning Objectives
+
+Demonstrate learning objectives to: 
+
+* Work with household level PUMS data from the Census FTP 
+* Aggregate data to the PUMA level 
+* Map PUMAs using the tigris package
+
+### Public Use Microdata Sample (PUMS) 
+
+<https://www.census.gov/programs-surveys/acs/microdata.html> 
+
+In the following example we will use household level data from the 2023 American Community Survey (ACS) in Oregon.  
+
+The data can be accessed from the File Transfer Protocol (FTP) website, <https://www2.census.gov/programs-surveys/acs/data/pums/>.  
+
+For ease of working with the data for this example, you can access the data here: 
+
+```{r}
+## WASHINGTON 2023
+## HOUSEHOLD LEVEL DATA
+wa_house<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/DATA/PUMS/Washington23/psam_h53_2023.csv", 
+                   header=TRUE)
+dim(wa_house)
+```
+
+### Public Use Microdata Areas (PUMAs) 
+
+PUMAs are Census created geographic areas that: 
+
+* Must have a minimum population of 100,000 people 
+* May be created by combining two or more contiguous counties 
+* May be created by combining census tracts that cross county boundaries 
+* Entirely inside or outside of metropolitan or micropolitan statistical areas
+* Avoid splitting American Indian reservations and off-reservation trust lands
+* Nest within states or equivalent entities
+
+PUMAs are the most detailed geographic areas available in the ACS PUMS.  They are redrawn after each decennial census. 
+
+#### STEP 1: Download TIGER/Line Shapefiles (5 points)
+
+<https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html>
+
+We will use the `trigis` package, which contains the shapefiles to visualize PUMAs. 
+
+```{r}
+### INSTALL AND LOAD PACKAGE
+#install.packages("tigris")
+library(tigris)
+
+### GET PUMAs for WASHINGTON
+pumasWA <- pumas("WA", year=2020, cb=T)
+```
+
+#### STEP 2: Make a blank PUMA map of the Washington PUMAs (5 points)
+
+```{r}
+### LIBRARY TIDYVERSE
+library(tidyverse)
+
+### GGPLOT - USE GEOM_SF
+ggplot(pumasWA)+
+  geom_sf()+
+  theme_minimal()
+```
+
+
+
+##### STEP 3: Filter the Data for Household Units (2.5 points)
+
+First let's filter out the group quarters, since we only want to look at households. 
+
+```{r}
+### FILTER TO KEEP ONLY HOUSEHOLD UNITS 
+### HINT: TYPEHUGQ 1 : HOUSEHOLD UNITS
+onlyHouse<-wa_house%>%
+  filter(TYPEHUGQ==1)
+```
+
+##### STEP 4: Create A New Variable (2.5 points)
+
+Use mutate to create a new binary variable for if a household has telephone service (TEL = 1).  Name this new variable 'tel01'.
+
+```{r}
+houseTel<-onlyHouse%>%
+  mutate(tel01=(TEL==1))
+```
+
+
+
+##### STEP 4: Household Per PUMA (5 points)
+
+Please calculate the following values for each PUMA: 
+
+(1) Number of households per PUMA
+(2) Proportion of households with telephone within each PUMA
+
+Please do not worry about weighted estimates at this point.  We will talk about that in depth in Unit #2. 
+
+```{r}
+### HOUSEHOLDS BY PUMA
+pumsWATel<-houseTel%>%
+  group_by(PUMA)%>%
+  summarise(n=n(), 
+            propTel=mean(tel01, na.rm=TRUE))
+```
+
+##### STEP 5: Join the Data (5 points)
+
+In this step, we want to join the PUMA map data (from tigris) with the summarised data from Step 4.
+
+```{r}
+#### FIX DATA FORMAT
+#### PUMACE20 SHOULD BE AN INTEGER
+pumasWA$PUMACE20<-as.integer(pumasWA$PUMACE20)
+
+#### JOIN THE PUMA MAP DATA WITH THE SUMMARISED PUMS DATA
+pumaHouse<-pumasWA%>%
+  left_join(pumsWATel, by=c("PUMACE20"="PUMA"))
+```
+
+##### STEP 6: Map the Number of Households in the PUMS by PUMA (7.5 points)
+
+Using the joined data from Step 5, create a map of the proportion of households with telephone by PUMA. 
+
+Make sure to give your map a title.  
+
+You can use whatever color palette that you like.  I prefer to use viridis.  
+
+```{r}
+### NUMBER OF HOUSEHOLDS IN THE SAMPLE BY PUMA
+ggplot(pumaHouse)+
+  geom_sf(color='black', aes(fill=n))+
+  scale_fill_viridis_c(option="viridis", "Sample Households")+
+  ggtitle("PUMS Household Sample Size by PUMA", 
+          subtitle = "2023 American Community Survey")+
+  theme_minimal()
+```
+
+#### STEP 7: Telephone Survey (7.5 points)
+
+Suppose that you want to do a telephone survey and ask respondents about their property value. 
+
+What issues might arise from doing this telephone survey?  Explain. 
+
+```{}
+YOUR ANSWER HERE: 
+```
+
+
+##### EXTRA CREDIT: Coverage Error (10 points)
+
+Calculate the coverage error.  To do this you will need to use R to find the average property value (VALP) for households with and without access to a telephone.  You will also need the number of houses with and without telephone access.  You can ignore the NAs.  After you find the values, you can calculate the coverage bias using the equation discussed in class and in the reading. 
+
+```{r}
+houseTel%>%
+  group_by(tel01)%>%
+  summarise(n=n(), 
+            avg=mean(VALP, na.rm = TRUE))
+```
+
+
+
