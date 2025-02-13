@@ -1,0 +1,190 @@
+---
+title: "DATA429/599: Unit 1 Quiz -  Iowa PUMS and PUMAs"
+author: "NAME HERE"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+### Learning Objectives
+
+Demonstrate learning objectives to: 
+
+* Work with household level PUMS data from the Census FTP 
+* Aggregate data to the PUMA level 
+* Map PUMAs using the tigris package
+
+### Public Use Microdata Sample (PUMS) 
+
+<https://www.census.gov/programs-surveys/acs/microdata.html> 
+
+In the following example we will use household level data from the 2023 American Community Survey (ACS) in Iowa.  
+
+The data can be accessed from the File Transfer Protocol (FTP) website, <https://www2.census.gov/programs-surveys/acs/data/pums/>.  
+
+For ease of working with the data for this example, you can access the data here: 
+
+```{r}
+## IOWA 2023
+## HOUSEHOLD LEVEL DATA
+ia_house<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/DATA/PUMS/Iowa2023/psam_h19_2023.csv", 
+                   header=TRUE)
+dim(ia_house)
+```
+
+### Public Use Microdata Areas (PUMAs) 
+
+PUMAs are Census created geographic areas that: 
+
+* Must have a minimum population of 100,000 people 
+* May be created by combining two or more contiguous counties 
+* May be created by combining census tracts that cross county boundaries 
+* Entirely inside or outside of metropolitan or micropolitan statistical areas
+* Avoid splitting American Indian reservations and off-reservation trust lands
+* Nest within states or equivalent entities
+
+PUMAs are the most detailed geographic areas available in the ACS PUMS.  They are redrawn after each decennial census. 
+
+#### STEP 1: Download TIGER/Line Shapefiles for IA (5 points)
+
+<https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html>
+
+We will use the `trigis` package, which contains the shapefiles to visualize PUMAs. 
+
+```{r}
+### INSTALL AND LOAD PACKAGE
+#install.packages("tigris")
+library(tigris)
+
+### GET PUMAs for IOWA (IA)
+## INSERT CODE HERE ##
+```
+
+#### STEP 2: Make a blank PUMA map of the Iowa PUMAs (5 points)
+
+```{r}
+### LIBRARY TIDYVERSE
+library(tidyverse)
+
+### GGPLOT - USE GEOM_SF
+## INSERT CODE HERE ##
+```
+
+
+
+
+##### STEP 3: Create A New Variable (5 points)
+
+Suppose we want to study households that receive income from agricultural products.  
+
+You will want to use the variable 'AGS', which is coded as follows: 
+
+Sales of Agriculture Products (yearly sales, no adjustment factor is
+applied)
+
+* b .N/A (GQ/vacant/not a one family house or mobile home/less than
+.1 acre)
+* 1 .None
+* 2 .$ 1 - $ 999
+* 3 .$ 1000 - $ 2499
+* 4 .$ 2500 - $ 4999
+* 5 .$ 5000 - $ 9999
+* 6 .$10000+
+
+First, we will need to deal with the NA's.  
+
+Please run this code to turn those NAs to 0's.  The reason we can change to zero's here rather than remove NAs is that then we would be changing the target population from households to households that have more than 0.1 acres.  Since we want to have all households, we can change this to zero. 
+```{r}
+## PLEASE JUST RUN MY CODE
+## MUTATE WITH CASE WHEN
+houseAG<-ia_house%>%
+  filter(TYPEHUGQ==1)%>%
+  mutate(ag01 = case_when(
+    is.na(AGS)==TRUE ~ 0, ## CHANGE NA's to zeros for this analysis
+    AGS == 1 ~0, ## 1 : NO INCOME FROM AG
+    AGS>= 2 ~ 1 ## MORE THAN ZERO AG INCOME
+  ))
+```
+
+After looking at my code, please describe what the new variable 'ag01' is doing. 
+
+HINT: 
+
+```{r}
+##  ORIGINAL
+tail(ia_house$AGS)
+
+## WRANGLED
+tail(houseAG$ag01)
+```
+
+Please include your description here: 
+
+```{}
+YOUR ANSWER HERE: 
+
+```
+
+
+
+##### STEP 4: Household Per PUMA (5 points)
+
+Please calculate the following values for each PUMA: 
+
+(1) Number of households per PUMA
+(2) Proportion of households with agricultural income within each PUMA
+
+Please do not worry about weighted estimates at this point.  We will talk about that in depth in Unit #2. 
+
+```{r}
+### HOUSEHOLDS BY PUMA
+## INSERT CODE HERE ##
+```
+
+##### STEP 5: Join the Data (5 points)
+
+In this step, we want to join the PUMA map data (from tigris) with the summarized data from Step 4.
+
+```{r}
+#### FIX DATA FORMAT
+#### PUMACE20 SHOULD BE AN INTEGER
+## INSERT CODE HERE ##
+
+#### JOIN THE PUMA MAP DATA WITH THE SUMMARISED PUMS DATA
+## INSERT CODE HERE ##
+```
+
+##### STEP 6: Map the Number of Households in the PUMS by PUMA (7.5 points)
+
+Using the joined data from Step 5, create a map of the proportion of households with agricultural income by PUMA. 
+
+Make sure to give your map a title.  
+
+You can use whatever color palette that you like.  I prefer to use viridis.  
+
+```{r}
+### Proportion of Ag Households by PUMA
+## INSERT CODE HERE ##
+```
+
+#### STEP 7: Agriculture Survey (7.5 points)
+
+Suppose that you want to do a survey on the average amount households pay for fuel (FULFP), but the sampling frame available to you ONLY contains the homes that participate in agriculture (ie. households that get a none zero income from the sale of agricultural products).   
+
+What issues might arise from using this sampling frame?  Explain. 
+
+```{}
+YOUR ANSWER HERE: 
+```
+
+
+##### EXTRA CREDIT: Coverage Error (10 points)
+
+Calculate the coverage error.  To do this you will need to use R to find the average fuel cost (FULFP) for households who participate in agriculture and who do not participate in agriculture.  You will also need the number of households who participate in agriculture and who do not participate in agriculture.  You can remove any NAs from FULFP.  After you find the values, you can calculate the coverage bias using the equation discussed in class and in the reading. 
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+
+
