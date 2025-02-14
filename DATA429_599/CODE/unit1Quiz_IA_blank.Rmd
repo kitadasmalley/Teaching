@@ -169,7 +169,7 @@ You can use whatever color palette that you like.  I prefer to use viridis.
 
 #### STEP 7: Agriculture Survey (7.5 points)
 
-Suppose that you want to do a survey on the average amount households pay for fuel (FULFP), but the sampling frame available to you ONLY contains the homes that participate in agriculture (ie. households that get a none zero income from the sale of agricultural products).   
+Suppose that you want to do a survey on the average amount households pay for fuel (FULP), but the sampling frame available to you ONLY contains the homes that participate in agriculture (ie. households that get a none zero income from the sale of agricultural products).   
 
 What issues might arise from using this sampling frame?  Explain. 
 
@@ -180,7 +180,7 @@ YOUR ANSWER HERE:
 
 ##### EXTRA CREDIT: Coverage Error (10 points)
 
-Calculate the coverage error.  To do this you will need to use R to find the average fuel cost (FULFP) for households who participate in agriculture and who do not participate in agriculture.  You will also need the number of households who participate in agriculture and who do not participate in agriculture.  You can remove any NAs from FULFP.  After you find the values, you can calculate the coverage bias using the equation discussed in class and in the reading. 
+Calculate the coverage error.  To do this you will need to use R to find the average fuel cost (FULP) for households who participate in agriculture and who do not participate in agriculture.  You will also need the number of households who participate in agriculture and who do not participate in agriculture.  You can remove any NAs from FULP  After you find the values, you can calculate the coverage bias using the equation discussed in class and in the reading. 
 
 ```{r}
 ## INSERT CODE HERE ##
