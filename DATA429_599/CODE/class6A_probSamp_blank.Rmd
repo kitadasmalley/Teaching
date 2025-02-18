@@ -1,0 +1,382 @@
+---
+title: 'DATA429/599: Introduction to Probability Sampling'
+author: "INSERT NAME HERE" 
+output:
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+---
+
+### Learning Objectives
+In this lesson students will learn to:
+
+* Implement fundamental probability sampling methods (simple random sample, stratified sample, cluster sample, and systematic sample)
+
+Based on notes from "Sampling: Design and Analysis" by Sharon Lohr. 
+
+### I. Basic Sampling Methods
+
+In probability samples each unit in the population has a known population of selection and a random mechanism is used to select units.  
+
+Suppose that we have a population with unique IDs 1 through 100 and we want to select 20.    
+
+#### A. Simple Random Sample 
+
+In a simple random sample every unit has an equal chance of selection. 
+
+```{r}
+### SRS
+## RANDOMLY CHOOSE 20 IDS
+## INSERT CODE HERE ##
+
+## NOTE THIS IS DONE WITHOUT REPLACEMENT
+```
+
+#### B. Stratified Random Sample
+
+Stratified sampling is a useful approach when the population can be divided into distinct subgroups, where individuals within each subgroup are more alike, and there are notable differences between the subgroups.  In stratified sampling observations are randomly chosen from each strata, which ensures that each strata is represented.  
+
+Example:  Suppose that the population is divided into five strata (1 through 20, 21 through 40, 41 through 60, 61 through 80, and 81 through 100).  We want to select 4 from each of the five strata to have a total sample of size 20. 
+
+```{r}
+### STRATIFIED
+## INSERT CODE HERE ##
+```
+
+
+#### C. Cluster Sample
+
+Cluster sampling is a suitable method when the population is divided into natural groups or clusters, where units within each cluster may differ, but the clusters themselves are more similar to each other. Random clusters are then selected and then a census is taken with the selected clusters.  
+
+Motivation: Suppose there are 20 clusters within the population, such that every 5 IDs are grouped together into a cluster.  We want to select 4 clusters and then observe all 5 IDs within the associated cluster. 
+
+```{r}
+### CLUSTER IDs
+## INSERT CODE HERE ##
+
+### CLUSTER Start Value
+## INSERT CODE HERE ##
+
+### CLUSTER Census
+## INSERT CODE HERE ##
+
+```
+
+
+#### D. Systematic Sample
+
+Systematic sampling is simple yet efficient, particularly if the data are ordered.  In systematic sampling a random starting point is chosen and then every $k^{th}$ ID is selected.   
+
+```{r}
+### SYSTEM
+## RANDOM START
+## INSERT CODE HERE ##
+
+## EVERY 5th OBS
+## INSERT CODE HERE ##
+
+```
+
+
+#### Let's Bring It All Together!
+
+```{ warning=FALSE, message=FALSE}
+library(tidyverse)
+
+### PUT TOGETHER
+sampleDF<-data.frame(srs, strat, clusterUn, sysSamp)
+
+head(sampleDF)
+
+### TIDY TO PLOT
+tidySamp<-sampleDF%>%
+  pivot_longer(cols=srs:sysSamp, 
+               names_to = "SampType", values_to = "sample")
+
+## RELEVEL
+tidySamp$SampType<-factor(tidySamp$SampType, 
+                          levels=c("srs", "strat", "clusterUn", "sysSamp"))
+
+### LABELS FOR FACETS
+samp_names <- c(
+  `srs` = "Simple Random",
+  `strat` = "Stratified",
+  `clusterUn` = "Cluster",
+  `sysSamp` = "Systematic"
+)
+
+### GGPLOT
+ggplot(tidySamp, aes(x=sample, y=1, color=SampType))+
+  geom_point()+
+  facet_grid(SampType~., labeller = as_labeller(samp_names))+
+  theme_bw()+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position="none")
+```
+
+
+
+### II. Framework for Probability Sampling
+
+Suppose we have a finite **population**, or **universe**, of size $N$ and we would like to select of sample of size $n$. 
+
+#### A. Subsets/Samples
+The number of subsets of size $n$ from the population of size $N$ can be enumated by $${N\choose n}=\frac{N!}{n!(N-n!)}$$
+
+```{r}
+### HOW MANY COMBINATIONS? 
+### POP SIZE 4
+### SAMP SIZE 2
+## INSERT CODE HERE ##
+
+## DIM
+## INSERT CODE HERE ##
+```
+#### Your Turn! 
+
+Suppose you have a population of size $N=10$, how many unique samples of size $n=3$ can be drawn (order doesn't matter).
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+
+
+#### B. Probability Models 
+
+Each possible sample from the population has a known probability of selection.  
+
+Recall: Probability Axioms 
+- Non-negativity: Probability for each subset is greater than or equal to 0
+- Normalization: The sum of the probabilities for each sample is equal to 1
+
+Cosider the following two sampling plans (distributions): 
+
+MODEL 1: 
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Sample      & \{1,2\} & \{1,3\} & \{1,4\} & \{2,3\} & \{2,4\} & \{3,4\} \\ \hline
+Probability & 1/6     & 1/6     & 1/6     & 1/6     & 1/6     & 1/6     \\ \hline
+\end{tabular}
+
+MODEL 2: 
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Sample      & \{1,2\} & \{1,3\} & \{1,4\} & \{2,3\} & \{2,4\} & \{3,4\} \\ \hline
+Probability & 1/3     & 1/6     & 0     & 0     & 0     & 1/2     \\ \hline
+\end{tabular}
+
+
+
+```{r}
+### MODEL 1
+probs1<-rep(1/6, 6)
+
+### MODEL 2
+probs2<-c(1/3, 1/6, 0, 0, 0, 1/2)
+```
+
+
+We can randomly select a sample using the first sampling plan. 
+
+```{r}
+### A SINGLE SELECTION FROM DISTR 1
+## INSERT CODE HERE ##
+
+### WHICH SUBSET DID WE CHOOSE?
+## INSERT CODE HERE ##
+```
+
+Now let's simulate that several times to see the distribution of how often different IDs are chosen.  
+
+```{r}
+### SIMULATE REPEATED DRAWS FROM THE POPULATION
+### USE SAMPLING PLAN 1
+## INSERT CODE HERE ##
+
+### WHICH OBS?
+## INSERT CODE HERE ##
+
+
+## PROB OF SELECTION
+## INSERT CODE HERE ##
+
+## PLOT
+## INSERT CODE HERE ##
+```
+
+#### Your Turn! 
+
+Simulate using the second sampling plan.  What do you observe?  
+```{r}
+### SIMULATE REPEATED DRAWS FROM THE POPULATION
+### USE SAMPLING PLAN 2
+## INSERT CODE HERE ##
+
+
+### WHICH OBS
+## INSERT CODE HERE ##
+
+## PROB OF SELECTION
+## INSERT CODE HERE ##
+
+## PLOT
+## INSERT CODE HERE ##
+```
+
+Since each sample has a known probability of selection, we can calculate the probability of each unit being included in a sample.  This probability is known as the **inclusion probability **, $\pi_i$, which is the sum of the probabilities of all possible samples that contain unit $i$.  
+
+For example, in the second sampling plan, 
+$$\pi_1=\frac{1}{3}+\frac{1}{6}=\frac{1}{2}$$
+
+#### Your Turn! 
+
+Calculate the (theoretic) probabilities of inclusion for 2, 3, and 4. 
+
+```{r}
+## YOUR CODE HERE ##
+```
+
+
+### III. Sampling Distributions
+
+Consider the following population with IDs and values ($y$).
+
+```{r}
+### POPULATION
+popData<-data.frame(IDs=1:8, 
+                    y=c(1, 2, 4, 4, 7, 7, 7, 8))
+
+popData
+```
+
+#### Knowledge Check!
+
+How many ways are there to select a subset of size $n=4$ from this population of size $N=8$?
+
+```{r}
+## YOUR CODE ##
+```
+
+
+What are the subsets of size $n=4$?
+
+```{r}
+### SUBSETS OF IDS
+### POP SIZE 8
+### SAMPLE SIZE 4
+## INSERT CODE HERE ##
+
+## DIM
+## INSERT CODE HERE ##
+```
+
+The first subset contains the IDs 1, 2, 3, and 4.  These correspond to the following values: 
+
+```{r}
+### MAP IDs to VALUES
+## INSERT CODE HERE ##
+
+## INSERT CODE HERE ##
+```
+
+The sample mean $\bar{y}$ is one of the most common statistics. 
+
+```{r}
+### SAMPLE MEAN
+## INSERT CODE HERE ##
+```
+
+Suppose that we really want to calculate the total and not the mean.  We can estimate the total using the estimator 
+$$\hat{t}=N\bar{y}$$
+```{r}
+### ESTIMATE THE TOTAL
+## INSERT CODE HERE ##
+```
+
+We can repeat this for every sample to yield the sampling distribution.  This will show us how variable the statistic is. 
+
+```{}
+### ALL TOTALS
+t_hat<-c()
+for(i in 1:70){ 
+  these_vals<-popData$y[combos_N8n4[,i]]
+  this_ybar<-mean(these_vals)
+  this_that<-8*this_ybar
+  t_hat<-c(t_hat, this_that)
+}
+
+
+## TABLE OF TOTALS
+table(t_hat)
+
+## DISTR OF TOTALS
+distr<-table(t_hat)/70
+distr
+
+```
+#### A. Expected Value
+
+
+The **expected value** is the mean of the sampling distribution of a statistic.  This can be thought of as a weighted average, using the probability. 
+
+
+$$E[\hat{t}]=\sum_k k Pr(\hat{t}=k)$$
+
+```{r}
+### EXPECTED VALUE
+## INSERT CODE HERE ##
+
+## INSERT CODE HERE ##
+
+### SUMMANDS
+## INSERT CODE HERE ##
+
+### EXPECTED VALUE
+## INSERT CODE HERE ##
+```
+
+How far off are we?  
+
+#### B. Bias 
+
+This bias is the mathematical difference between the expected value of the estimator and the true value. 
+
+$$Bias[\hat{t}]=E[\hat{t}]-t$$
+
+In reality, we don't usually know the true value. 
+
+In this case, we know the true value.
+
+```{r}
+### TRUE TOTAL
+## INSERT CODE HERE ##
+```
+
+Since the difference is zero, we would say that this estimator is **unbiased**.
+
+#### C. Variance
+
+Variance describes how spread out the estimators are. 
+
+$$V[\hat{t}]=E[(\hat{t}-E[\hat{t}])^2]=\sum_k P(\hat{t}=k)(k-E[\hat{t}])^2$$
+
+```{r}
+### VARIANCE
+### SUMMANDS
+## INSERT CODE HERE ##
+
+### EXPECTED VALUE
+## INSERT CODE HERE ##
+```
+
+#### D. Mean Squared Error
+
+$$MSE[\hat{t}]=V[\hat{t}]+[Bias{\hat{t}}]^2$$
