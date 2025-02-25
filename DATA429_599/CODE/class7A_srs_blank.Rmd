@@ -1,0 +1,271 @@
+---
+title: 'DATA429/599: Simple Random Sample Estimators'
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+In this lesson students will learn to:
+
+* Plot weighted survey data
+* Use weights in analyses
+* Construct confidence intervals for simple random samples from finite populations
+
+### Motivating Example
+
+Motivating example from "Sampling: Design and Analysis" by Sharon Lohr.
+
+A university has 807 faculty members.  For each faculty member, the number of refereed publications was recorded.  This number is not directly available on the database, so this requires the investigator to examine each record separately.  A frequency table for number of refereed publications is given below for an SRS of 50 faculty members. 
+
+```{r}
+### PUBS
+pubs<-0:10
+fac<-c(28, 4, 3, 4, 4, 2, 1, 0, 2, 1, 1)
+
+## LET'S CHECK THAT n=50
+sum(fac)
+
+### DATA FRAME
+pubDF<-data.frame(pubs, fac)
+pubDF
+```
+
+
+
+### I. Plot Weighted Data 
+
+
+```{r warning=FALSE, message=FALSE}
+## LOAD TIDYVERSE
+library(tidyverse)
+
+## USE GGPLOT AND SPECIFY WEIGHTS
+### PLOT THE DATA
+
+## INSERT CODE HERE ##
+```
+
+#### What do you see?
+
+How would you describe the shape of this distribution? 
+
+```{}
+YOUR ANSWER HERE
+```
+
+
+### II. Weighted Estimates
+
+We can try two different approaches to prove that the weighted estimator is an equivalent method.  
+
+#### Method One: Recreate the Sample
+
+Weights indicate the number of units a given respondent represents.  Thus, we can use these weights to "recreate" the sample using the frequency table. 
+
+```{r}
+## TAKE ONE
+## WEIGHTS CAN BE USED TO RE-CREATE!
+fullSamp<-c()
+for(i in 1:length(fac)){
+  fullSamp<-c(fullSamp, 
+              rep(pubs[i], fac[i])) # REPLICATE
+}
+
+fullSamp
+```
+
+
+Consider the following common sample statistics: 
+
+- Sample mean: $\bar{y}=\frac{1}{n}\sum_{i=1}^n y_i$
+- Sample variance: $s^2=\frac{1}{n-1}\sum_{i=1}^n (y_i-\bar{y})^2$
+- Sample standard deviation: $s=\sqrt{s^2}$
+
+```{r}
+## SAMPLE MEAN
+## INSERT CODE HERE ##
+
+## SAMPLE VAR
+## INSERT CODE HERE ##
+
+## SAMPLE SD
+## INSERT CODE HERE ##
+```
+#### Method Two: Use Weights
+
+First, observe that the size can be given by the sum of the weights.  
+
+**In this case**, since the table summarizes the publication amounts, the sum of the weights give the size of the sample, rather than the size of the population; however, the **principles are similar.**  
+
+*Typically, weights indicates the number of units the respondents in the population (not the sample).*
+
+##### Weighted Sample Mean
+
+$$\bar{y}=\frac{\sum_{i=1}^n w_iy_i}{\sum_{i=1}^n w_i}$$
+
+```{r}
+## NUMERATOR
+## INSERT CODE HERE ##
+
+## DEMONINATOR
+## INSERT CODE HERE ##
+
+## SAMPLE MEAN
+## INSERT CODE HERE ##
+```
+
+##### Sample Standard Deviation 
+
+Using the frequency table of the sample as weights, we can reconstruct the sample variance with 
+
+$$ s^2=\frac{\sum_{i=1}^nw_i(y_i-\bar{y})^2}{(\sum_{i=1}^nw_i)-1}$$
+
+
+```{r}
+## SAMPLE VARIANCE
+## INSERT CODE HERE ##
+
+## SAMPLE STANDARD DEV
+## INSERT CODE HERE ##
+```
+
+Observe that these are equivalent to using the recreated sample!
+
+
+
+### III. Confidence Interval for the Mean
+
+Let's assume that the Central Limit Theorem works, that it's safe to construct a confidence interval for the mean.  
+
+The confidence interval has the form: 
+$$ Point Estimate \pm Critical Value \times Standard Error$$
+
+#### A. Point Estimate 
+
+The **point estimate** for a confidence interval for the mean is the weighted average, $\bar{y}$
+
+#### B. Critival Value 
+
+The **critical value** creates a *buffer* such that $(1-\frac{\alpha}{2})\times 100\%$ of the area in the asymptotic sampling distribution is contained around the mean.  A common significance level is $\alpha=0.05$, which results in $95\%$ confidence. 
+
+If the population standard deviation is known, we use critical values from the Standard Normal (Z) distribution.
+
+```{r}
+## Z CRITICAL VALUE
+## INSERT CODE HERE ##
+```
+
+In reality, we usually have to estimate the population standard deviation with the sample standard deviation.  To convey less certainty in the mean, we use a t-distribution, which is more defuse.  
+
+```{r}
+## WHAT ABOUT T DISTR?
+## INSERT CODE HERE ##
+
+```
+
+#### C. Standard Error for the Mean
+
+The standard error for the mean takes the form 
+
+$$SE(\bar{y}=\sqrt{(1-\frac{n}{N})\frac{s^2}{n}})$$
+
+where $(1-\frac{n}{N})$ is known as the **finite population correction**, where $\frac{n}{N}$ is the sampling fraction.  As the sample becomes a larger and larger fraction of the population the variablilty decreases.  
+
+```{r}
+### Finite Population Correction 
+## INSERT CODE HERE ##
+
+## SAMPLING FRACTION
+## INSERT CODE HERE ##
+
+## FPC
+## INSERT CODE HERE ##
+
+## STANDARD ERROR
+## INSERT CODE HERE ##
+```
+
+
+#### Bring These Pieces Together
+
+```{r}
+## Z CI
+## INSERT CODE HERE ##
+
+
+## NEW T CI
+## INSERT CODE HERE ##
+```
+
+### IV. Skew and Sample Size
+
+In statistics the third standardized moment is used to quantify skewness.  This has been used by Sugden et al (2000) to recommend a minimum sample size in the presence of skewness. 
+
+
+$$n_{min}=28+25(\frac{\sum_{i=1}^n(y_i-\bar{y})^3}{Ns^3})^2$$
+
+using the values ($\bar{y}$ and $s$)obtained from the sample. 
+
+
+For this sample we find: 
+```{r}
+### SKEWNESS
+### EQN by Sugden et al (2000)
+
+### SAMPLE THIRD CENTRAL MOMENT
+## INSERT CODE HERE ##
+
+### MIN SAMP SIZE
+## INSERT CODE HERE ##
+```
+
+Oh no!  What does this mean?!
+
+This means that with a sample size of $n=50$ the Central Limit Theorem will NOT kick in and therefore, we should not trust these confidence intervals.
+
+### V. Proportions
+
+We can follow a similar recipe to construct confidence intervals for proportions. 
+
+- Point Estimate: $\hat{p}=\bar{y}$ still works because proportions are averages of binary data. 
+- Standard Error: $SE(\hat{p})=\sqrt{(1-\frac{n}{N})\frac{\hat{p}(1-\hat{p})}{n-1}}$
+
+#### You Try It! 
+
+Now estimate the proportion of faculty members with no publications and give a $95\%$ confidence interval. 
+
+```{r}
+## CI for PROP
+
+## BINARY
+## INSERT CODE HERE ##
+
+## P HAT
+## SAMPLE MEAN
+## INSERT CODE HERE ##
+
+## SE PROP
+## INSERT CODE HERE ##
+
+## TOGETHER
+## Z CI
+## INSERT CODE HERE ##
+```
+
+### VI. Totals
+
+Although it doesn't work for this example, for the sake of completeness, we will also include information to estimate the total. 
+
+- Point Estimate: $\hat{t}=\sum_{i=1}^n w_iy_i=N\bar{y}$ 
+- Standard Error: $SE(\hat{t})=N\sqrt{(1-\frac{n}{N})\frac{s^2}{n}}$
+
+
+
