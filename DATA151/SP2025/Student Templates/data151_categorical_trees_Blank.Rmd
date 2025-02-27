@@ -1,0 +1,439 @@
+---
+title: '(DATA151) Working with Categorical Data : Tables and Bars'
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+In this lesson students will learn to apply categorical data analysis methods to data sets with fundamentally different structures. 
+
+* Work with individual and cross-tabulated level raw data
+* Create univarite tables to show marginal distributions 
+* Create two-way tables to show joint and conditional distributions
+* Create bar graphs and assess which type of bar graph is best for a given scenario (stacked, dodged, filled)
+
+
+The `tidyverse` package is needed for these examples
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+
+
+### Example: Happy Little Trees!
+
+Bob Ross, known for his PBS show The Joy of Painting, was a skilled teacher who guided viewers through creating iconic landscapes like "happy trees," "almighty mountains," and "fluffy clouds." 
+
+Over his 11-year career, he painted 381 works, using a consistent set of themes and elements. This large collection of data serves as a foundation for exploring statistical concepts, specifically conditional probability and clustering. 
+
+
+Motivation: <https://fivethirtyeight.com/features/a-statistical-analysis-of-the-work-of-bob-ross/> 
+
+### Step 0: Call the library
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+### Step 1: Load the Data 
+
+```{r}
+## BOB ROSS DATA FROM FIVETHIRTYEIGHT
+bob<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/ProjectData/elements-by-episode.csv")
+
+```
+
+
+### Step 2: Data Structure
+
+Look at the structure of the data.
+
+```{r}
+## STRUCTURE 
+## INSERT CODE HERE ##
+```
+
+In this dataset the rows represent individual paintings.  In the following example we will learn how to use the `table` and  `prop.table` functions. 
+
+### Step 3: One-way Table
+
+Create a one-way frequency table for paintings with "happy little trees".
+
+**Motivating Question 1**: What percent of paintings contain “happy little trees”?
+
+
+```{r}
+# Table for "happy little trees"
+# use table() function
+## INSERT CODE HERE ##
+
+# WHAT DOES 0 AND 1 MEAN?
+```
+
+We can also use `kable` to make tables in R markdown:
+
+```{r}
+library(knitr)
+## INSERT CODE HERE ##
+```
+
+### Step 4: Relative Frequency Table
+
+We might also want to display proportions.
+
+```{r}
+# the prop.table() function must take a table object
+## INSERT CODE HERE ##
+```
+
+### Step 5: Univariate Bar Graphs
+Let’s visualize this distribution.
+
+#### A. Simple/Vanilla Bar Graph 
+
+A simple bar graph: 
+
+```{r}
+# create a graph to display the distribution
+## INSERT CODE HERE ##
+```
+
+#### B. Color
+
+Since bars are two dimensional the color aesthetic only outlines bars.
+
+What is going on in this graph?
+
+```{r}
+## ADD COLOR
+## INSERT CODE HERE ##
+
+## INSERT CODE HERE ##
+```
+
+#### C. Fill
+
+```{r}
+## OOPS! Let's use fill!
+## INSERT CODE HERE ##
+
+### LET'S TRY DIFFERENT COLORS
+treePal<-c("brown", "forestgreen")
+
+## INSERT CODE HERE ##
+```
+
+#### D. Proportions 
+
+```{r}
+## CHANGE Y-AXIS TO PERCENT
+## INSERT CODE HERE ##
+  
+```
+
+#### E. Recipe for a Pie Chart
+
+**STEP 1**: Make a stacked bar graph. 
+
+```{r}
+## STEP 1: MAKE A STACKED-BAR GRAPH
+## INSERT CODE HERE ##
+```
+
+**STEP 2**: Use polar coordinates
+
+```{r}
+## PLOT IT IN A CIRCLE
+## INSERT CODE HERE ##
+```
+
+### Learning by Doing! 
+
+**Motivating Question 2**: What percent of paintings contain ”almighty mountains”?
+
+
+In small groups work together to answer the question above, by doing the following tasks.
+
+  1. Make a one-way table for mountains.
+```{r}
+# Table for mountain
+# use table() function
+## INSERT CODE HERE ##
+
+# kable 
+## INSERT CODE HERE ##
+```
+  2. Make a relative frequency table.
+```{r}
+# use prop.table() 
+## INSERT CODE HERE ##
+```
+
+  3. Make a univariate bar graph for the response options. 
+```{r}
+## INSERT CODE HERE ##
+
+# create a graph to display the distribution
+## INSERT CODE HERE ##
+```
+
+  4. Make a stacked bar graph of the response options. 
+```{r}
+# stacked bar graph
+## INSERT CODE HERE ##
+```
+
+  5. Make a pie chart.
+```{r}
+# pie graph
+## INSERT CODE HERE ##
+```
+
+### Step 6. Two-way Tables
+
+**Motivating Question 3**:
+
+What percent of paintings that have “happy little trees” and “almighty mountains”?
+
+
+```{r}
+## TREES AND MOUNTAINS
+# Row then col
+## INSERT CODE HERE ##
+
+## kable
+## INSERT CODE HERE ##
+```
+Now that we have two dimensions this is getting confusing.  Maybe we should make labels. 
+
+```{r}
+bob<-bob%>%
+  mutate(treeLab=case_when(
+    TREES==0 ~ "No Trees", 
+    TREES==1 ~ "Happy Little Trees"
+  ),
+  mntLab=case_when(
+    MOUNTAINS==0 ~ "No Mnts", 
+    MOUNTAINS==1 ~ "Almighty Mountains"
+  )
+  )
+  
+## INSERT CODE HERE ##
+  
+```
+
+
+### Step 7: Bar Graphs with two dimensions
+
+#### A. Stacked Bar Graph
+
+```{r}
+## Stacked Bar Graph (Default)
+## INSERT CODE HERE ##
+```
+
+#### B. Side-by-side Bar Graph
+
+We can use position adjustments to change the type of bar graph. 
+
+```{r}
+## Side-by-side Bar Graph 
+## INSERT CODE HERE ##
+```
+
+
+### Step 8: Types of Distributions
+
+#### A. Joint Distribution
+
+**Definition**: The probability distribution on all possible pairs of outputs.
+
+```{r}
+## Joint Distribution
+## INSERT CODE HERE ##
+```
+
+**Note**: The sum of any proper distribution is 1.
+
+```{r}
+## NOTE: The sum of any distribution is 1
+## INSERT CODE HERE ##
+```
+
+We can also do this with `kable`
+
+```{r}
+## kable
+## INSERT CODE HERE ##
+
+```
+#### B. Marginal Distribution
+
+**Definition**: Gives the probabilities of various values of the variable without reference to the values of the other variable.
+
+```{r}
+## Marginal Distribution of Happy Little Trees
+## Row Sums (ie sum over the cols)
+## INSERT CODE HERE ##
+
+## Observe: This matches with 
+## INSERT CODE HERE ##
+
+```
+#### Learning by Doing! 
+
+How would you find the marginal distribution of mountains in paintings by using the joint distribution?
+
+```{r}
+## INSERT CODE HERE
+## Marginal Distribution of Mountains
+## Col Sums (ie sum over the rows)
+## INSERT CODE HERE ##
+
+## Observe: This matches with 
+## INSERT CODE HERE ##
+```
+
+#### C. Conditional Distribution
+
+**Definition**: A probability distribution that describes the probability of an outcome given the occurrence of a particular event.
+
+**Motivating Question 4**: What percent of paintings with “happy little trees” also have “almighty mountains”?
+
+
+```{r}
+## Conditional Distr (Given the row dim)
+## margin = 1 for row
+## INSERT CODE HERE ##
+
+## Observe that this is a proper distribution
+## INSERT CODE HERE ##
+```
+We can visualize conditional distributions with a different position adjustment. 
+
+```{r}
+## FILLED BAR GRAPH
+## INSERT CODE HERE ##
+```
+
+
+### Learning by Doing!
+
+Does it make sense to condition in the other direction?  
+
+We could describe conditioning on the column dimension as, if we randomly selected a painting that contained mountains, what is the probability that it also contained trees? 
+
+```{r}
+## Conditional Distr (Given the col dim)
+## margin = 2 for col
+## INSERT CODE HERE ##
+```
+Your turn!  
+
+  1. Check that this conditional distribution is proper.
+  
+```{r}
+## INSERT CODE HERE
+## INSERT CODE HERE ##
+
+```
+  
+  2. Make a filled bar graph that shows this conditional distribution. 
+  
+```{r}
+## INSERT CODE HERE
+## INSERT CODE HERE ##
+```
+  
+### Step 9: Cross-tabulated Data
+
+Cross tabulated data shows the number of respondents that share a combination of characteristics or demographics.  This is a common format for survey data, which greatly reduces the size of a dataset. 
+
+```{r}
+## INSERT CODE HERE ##
+```
+
+Graphics can also be made with cross-tabulated data. 
+
+```{r}
+## Now we need to specify the height 
+## We are using color here to see how the bars are composed 
+## INSERT CODE HERE ##
+```
+
+Let's try fill now. 
+
+```{r}
+## Fill with color
+## INSERT CODE HERE ##
+```
+Make filled bar graphs. 
+
+```{r}
+## Filled bar graphs with cross-tab data
+## INSERT CODE HERE ##
+```
+
+### CAUTION
+
+It's generally NOT advised to use pie charts to make comparisons across distributions! 
+
+```{r}
+## Comparing Pies
+## INSERT CODE HERE ##
+```
+
+
+### Example #2: Gender Bias
+
+In 1973, UC Berkeley became "one of the first universities to be sued for sexual discrimination" (with a statistically significant difference)
+
+#### Step 1: Load the data
+
+```{r}
+## UC Berk
+data(UCBAdmissions)
+str(UCBAdmissions)
+```
+
+#### Step 2: Reformat as data.frame
+
+```{r}
+cal<-as.data.frame(UCBAdmissions)
+```
+
+#### Step 3: Aggregated Bar Graph
+
+Stacked bar: 
+
+```{r}
+ggplot(cal, aes(x=Gender, y= Freq, fill=Admit))+
+  geom_bar(stat = "identity", 
+           position="fill")
+```
+
+#### Step 4: Separated by Department
+
+Faceted: 
+
+```{r}
+ggplot(cal, aes(x=Gender, y= Freq, fill=Admit))+
+  geom_bar(stat = "identity", 
+           position="fill")+
+  facet_grid(.~Dept)
+```
+
+#### Simpson's Paradox
+
+*How does this happen?*
+
+“The simple explanation is that women tended to apply to the departments that are the hardest to get into, and men tended to apply to departments that were easier to get into. (Humanities departments tended to have less research funding to support graduate students, while science and engineer departments were awash with money.) So women were rejected more than men. Presumably, the bias wasn’t at Berkeley but earlier in women’s education, when other biases led them to different fields of study than men.”
