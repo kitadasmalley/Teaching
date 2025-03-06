@@ -1,0 +1,271 @@
+---
+title: 'DATA429/599: Stratified Random Sample Estimators'
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+In this lesson students will learn to:
+
+* Construct estimates and confidence intervals for stratified random samples from finite populations
+
+
+Examples from "Sampling: Design and Analysis" by Sharon Lohr.
+
+
+### Warm-up / Review
+
+Data from a SRS of 120 golf courses, selected from a list of 14,938 golf courses in the United States, are in the file golfsrs.csv
+
+```{r}
+golf<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/CODE/golfsrs.csv", 
+               header=TRUE)
+```
+
+
+#### Visualize 
+
+Display the data in a histogram for the weekday greens fees for nine holes of golf (variable wkday9).  How would you describe the shape of the data? 
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
+## HISTOGRAM
+ggplot(data=golf, aes(x=wkday9))+
+  geom_histogram()+
+  theme_bw()+
+  ggtitle("Distribution of Weekday Greens Fees for 9 Holes")
+
+```
+
+
+#### Average and SRS Standard Error 
+
+Find the average weekday greens fee to play nine holes of golf and give the SE for the estimate.  
+
+
+```{r}
+## SAMPLE STATS
+y_bar<-mean(golf$wkend9)
+y_bar
+
+sampVar<-var(golf$wkend9)
+sampVar
+
+## STANDARD ERR
+n<-120
+N<-14938
+
+## FPC
+thisFPC<-1-(n/N)
+thisFPC
+
+## STANDARD ERROR
+standErr<-sqrt(thisFPC*(sampVar/n))
+standErr
+```
+
+#### Confidence Interval 
+
+Use what you found in Part B to construct a 95\% confidence interval. 
+
+```{r}
+## CONFIDENCE INTERVAL
+## Z CI
+zCritVal<-qnorm(0.975)
+y_bar+c(-1,1)*zCritVal*standErr
+
+
+## NEW T CI
+tCritVal<-qt(0.975, df=n-1)
+y_bar+c(-1,1)*tCritVal*standErr
+```
+
+
+### EX 1: Publications 
+
+In the previous example from Class 7B the SRS, not all departments were represented.  The following data are from a stratified sample using academic division.  The total number of faculty in Biological Sciences is 102, Physical Science is 310, Social Sciences is 217, and Humanities is 178 in the population.
+
+```{r}
+pubStr<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/CODE/pubStrat.csv", 
+                 header=TRUE)
+
+head(pubStr)
+```
+
+
+#### Stratified Average 
+
+Estimate the average number of referred publications by faculty members in the college, and give the standard error.  Use these to construct a 95\% confidence interval. 
+
+```{r}
+
+### BIO
+n1<-sum(pubStr$Biological)
+ybar1<-sum(pubStr$Publications*pubStr$Biological)/n1
+ybar1
+s2_1<-(1/(n1-1))*sum(pubStr$Biological*(pubStr$Publications-ybar1)^2)
+s2_1
+sqrt(s2_1)
+
+### PHYSICAL
+n2<-sum(pubStr$Physical)
+ybar2<-sum(pubStr$Publications*pubStr$Physical)/n2
+ybar2
+s2_2<-(1/(n2-1))*sum(pubStr$Physical*(pubStr$Publications-ybar2)^2)
+s2_2
+sqrt(s2_2)
+
+### SOCIAL
+n3<-sum(pubStr$Social)
+ybar3<-sum(pubStr$Publications*pubStr$Social)/n3
+ybar3
+s2_3<-(1/(n3-1))*sum(pubStr$Social*(pubStr$Publications-ybar3)^2)
+s2_3
+sqrt(s2_3)
+
+### HUMANITIES
+n4<-sum(pubStr$Humanities)
+ybar4<-sum(pubStr$Publications*pubStr$Humanities)/n4
+ybar4
+s2_4<-(1/(n4-1))*sum(pubStr$Humanities*(pubStr$Publications-ybar4)^2)
+s2_4
+sqrt(s2_4)
+```
+
+```{r}
+### COMBINE
+N<-807
+Nh<-c(102, 310, 217, 178)
+nh<-c(n1, n2, n3, n4)
+ybars<-c(ybar1, ybar2, ybar3, ybar4)
+s2s<-c(s2_1, s2_2, s2_3, s2_4)
+
+## Y BAR STRAT
+y_bar_strat<-sum((Nh/N)*ybars)
+y_bar_strat
+
+## VAR Y BAR STRAT
+var_ybar_strat<-sum((1-(nh/Nh))*(Nh/N)^2*(s2s/nh))
+var_ybar_strat
+
+## STD ERR
+stdErr_ybar_strat<-sqrt(sum((1-(nh/Nh))*(Nh/N)^2*(s2s/nh)))
+stdErr_ybar_strat
+
+## CONF INT
+y_bar_strat+c(-1,1)*qt(.975, 50-4)*stdErr_ybar_strat
+```
+
+#### Think about it!
+
+  * How does your result from Part A compare to what you found using the simple random sample? 
+
+  * Did stratification increase precision in this sample?  Explain why you think it did or did not.
+
+```{r}
+## DESIGN EFFECT 
+.101/0.135
+```
+
+### EX 2: Public Health Research
+
+Probability sampling (random selection) allows researchers to generalize from the sample to the population, and random assignment in experiments allows researchers to infer causation, but how often are these methods employed in public health research?  Hayat and Knapp (2017) drew a stratified random sample of 198 articles from the 547 research articles published in 2013 by three leading public health journals.  For each article, they determined the number of authors, the type of statistical inference used (confidence intervals, hypothesis tests, both, or neither), and whether random selection or random assignment was used.  The data are in file healthjournals.csv.
+
+```{r}
+#### PUBLIC HEALTH
+ph<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/CODE/healthjournals.csv", 
+             header=TRUE)
+
+str(ph)
+```
+ 
+The population sizes of journals are as follows: 
+ 
+  * American Journal of Public Health (AJPH): 280
+  * American Journal of Preventive Medicine (AJPM): 103
+  * Preventive Medicine (PM): 164
+  
+#### Confidence Interval for Proportion
+
+Estimate the percentage of the articles that use random selection.  Calculate the point estimate, standard error, and a 95\% confidence interval. 
+
+##### STEP 1: Summary Data
+
+```{r}
+ph%>%
+  group_by(Journal, RandomSel)%>%
+  summarise(n=n())
+
+p_hats<-c(29/(29+71), 14/(14+24), 15/(15+45))
+p_hats
+Nh<-c(280, 103, 164)
+nh<-c(100, 38, 60)
+N<-sum(Nh)
+```
+
+##### STEP 2: Estimates
+
+```{r}
+## P HAT STRAT
+pHat_strat<-sum((Nh/N)*p_hats)
+pHat_strat
+
+## SE
+(1-(nh/Nh))*(Nh/N)^2*((p_hats*(1-p_hats))/(nh-1))
+varPHat_str=sum((1-(nh/Nh))*(Nh/N)^2*((p_hats*(1-p_hats))/(nh-1)))
+varPHat_str
+sqrt(varPHat_str)
+
+```
+
+##### STEP 3: Confidence Interval
+
+```{r}
+### CONF INT
+pHat_strat+c(-1,1)*qnorm(0.975)*sqrt(varPHat_str)
+
+```
+
+
+#### Confidence Interval for Total
+
+Estimate the total number of articles (from the 547) that use random selection. Calculate the point estimate, standard error, and a 95\% confidence interval. 
+
+##### STEP 1: Total Estimate 
+
+```{r}
+### ESTIMATE TOTAL
+Nh*p_hats
+tot_str<-sum(Nh*p_hats)
+tot_str
+```
+
+##### STEP 2: Variance Estimate 
+```{r}
+## VAR
+N^2*varPHat_str
+
+## SE
+sqrt(N^2*varPHat_str)
+```
+
+##### STEP 3: Confidence Interval
+```{r}
+## CONF INT
+tot_str+c(-1,1)*qnorm(0.975)*sqrt(N^2*varPHat_str)
+
+```
+
+
+
+
+
