@@ -1,0 +1,187 @@
+---
+title: 'SPRING 2025 DATA151: Midterm #2 (R Section)'
+author: "STUDENT NAME"
+date: "TODAYS DATE"
+output: pdf_document
+---
+  
+
+### Breakfast of Champions! (30 Points Total)
+
+Please read ALL descriptions and directions.  For full points, use complete sentences when discussing your findings.  
+
+#### Description: 
+
+Eating cereal for breakfast is a common and convenient choice for many people. It's quick, easy to prepare, and often comes in a wide variety of flavors, making it a popular go-to meal. Cereal became especially popular in the early 20th century when companies like Kellogg's and General Mills began mass-producing it. Over time, breakfast cereal became a staple in households across the world, especially in the U.S., where it was marketed as a healthy, modern alternative to heavier breakfasts like eggs and bacon.
+
+Today, cereal remains one of the most popular breakfast options, thanks to its convenience and variety. It appeals to busy families, individuals on the go, and anyone looking for a quick, tasty breakfast option. With the rise of healthy cereals and new, innovative varieties, its popularity continues to endure.
+
+
+**Citations:**
+
+- Data from Kaggle <https://www.kaggle.com/datasets/crawford/80-cereals>
+
+
+**Variable Descriptions: **
+
+- Name: Name of cereal
+- mfr: Manufacturer of cereal
+  - A = American Home Food Products;
+  - G = General Mills
+  - K = Kelloggs
+  - N = Nabisco
+  - P = Post
+  - Q = Quaker Oats
+  - R = Ralston Purina
+- type:
+  - cold
+  - hot
+- calories: calories per serving
+- protein: grams of protein
+- fat: grams of fat
+- sodium: milligrams of sodium
+- fiber: grams of dietary fiber
+- carbo: grams of complex carbohydrates
+- sugars: grams of sugars
+- potass: milligrams of potassium
+- vitamins: vitamins and minerals - 0, 25, or 100, indicating the typical percentage of FDA recommended
+- shelf: display shelf (1, 2, or 3, counting from the floor)
+- weight: weight in ounces of one serving
+- cups: number of cups in one serving
+- rating: a rating of the cereals 
+
+
+#### Part 0: Getting Started (5 points - 1 point each!)
+
+* Create a new R markdown document for the Midterm template 
+* Create a folder called "MIDTERM_2"
+* Save new Rmd in your R Studio Cloud as "data151_mid2_YOURNAME"
+* Change the author and date in the heading of the R markdown
+* Leave yourself at least 3 comments (total) in your code chunks
+
+#### Part 1: Loading the Tidyverse Library (2.5 point)
+
+In this part of the assessment you will demonstrate your knowledge of dplyr verbs that are within the tidyverse package.  
+```{r}
+### LIBRARY
+
+## INSERT CODE HERE ##
+```
+
+Why do you need to call in a library? (Describe in one sentence)
+
+```{}
+YOU ANSWER HERE: 
+```
+
+
+#### Part 2: Calling in the Data 
+
+For the exercise you will important the data from my github account using the URL provided.  
+
+```{r}
+## CALL IN THE DATA
+cereal<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/ProjectData/cereal.csv", 
+                 header=TRUE)
+
+
+```
+
+#### Part 3: Structure (2.5 total points)
+
+Look at the structure of the dataset.
+
+```{r}
+### STRUCTURE
+## INSERT CODE HERE ###
+```
+
+How many cereals are represented in these data? (Note: The name of the dataset is called "80 Cereals")
+
+```{}
+YOUR ANSWER HERE: 
+```
+
+
+#### Part 4: Cereals Wars  (5 total points)
+
+The "cereal wars" refers to the intense rivalry and legal battles between the Kellogg brothers (John and Will), and C.W. Post, over the creation and marketing of breakfast cereals, particularly cornflakes and other related products in the early 1900's.  
+
+
+TASK 1: Make a new data frame that finds how many cereals there are per manufacturer and put them in order from most to least. 
+```{r}
+### TASK 1: MANUFACTURER
+## INSERT CODE HERE ##
+```
+
+Which manufacturer has the most different types of cereals in these data? 
+
+```{}
+YOUR ANSWER HERE: 
+```
+
+#### Part 5: Survey Says! (5 points)
+
+It's one thing to have a lot of options, but how to consumers rate the cereals?
+
+TASK 2: Make a new data frame to find the manufacturer with the highest average rating.
+
+Hint: Make sure to order your data. 
+
+
+```{r}
+### TASK 2: RATINGS
+## INSERT CODE HERE ##
+
+```
+
+Which manufacturer has the highest average rating? 
+
+```{}
+YOUR ANSWER HERE: 
+```
+
+#### Part 6: Calories Per Protein (5 points)
+
+TASK 3A: Make a new data frame with a new variable for calories per gram of protein. 
+
+```{r}
+### CALORIES PER PROTEIN
+## INSERT CODE HERE ##
+```
+
+TASK 3B: Make two graphics to describe the shape of the distribution of calories per gram of protein (from the previous step)
+
+```{r}
+### TWO GRAPHICS
+
+## INSERT CODE HERE ##
+```
+
+Describe the shape: 
+
+```{}
+YOUR ANSWER HERE: 
+```
+
+
+
+#### Part 7: Mother Knows Best! (5 points)
+
+My kids like to have hot cereal of breakfast (like oatmeal). 
+
+TASK 4A:  Make a new data frame to compare the average protein and average sugar content across cold and hot cereal types.  
+
+```{r}
+### HOT CREAL
+## INSERT CODE HERE ##
+
+```
+
+TASK 4B: Make a side-by-side box plot to compare the distribution of sugars across cold and hot cereal types. 
+
+```{r}
+### GRAPH TO COMPARE 
+## INSERT CODE HERE ##
+```
+
