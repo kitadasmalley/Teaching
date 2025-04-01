@@ -1,0 +1,421 @@
+---
+title: 'DATA429/599: Techniques for Handling Unit Nonresponse'
+output:
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+---
+
+### Learning Objectives: 
+
+In this lesson students will learn to:
+
+* The woes of nonresponse!
+* How to use auxiliary data to re-weight survey responses in the face of nonresponse  
+
+### The Data
+
+These data were put together from NBA and WNBA records for the 2022-2023 and 2022 seasons, respecitively.
+
+For this activity we are going to pretend that we are doing a survey on professional basketball players. 
+
+Download the data here: 
+
+```{r}
+## DOWNLOAD DATA
+bball<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/ProjectData/bBall2022/bballNR.csv")
+
+str(bball)
+```
+
+We will also need the tidyverse to help with some wrangling: 
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+### The Woes of Nonresponse 
+
+Consider two different oracles that know deterministically if someone is predestined to respond or not respond to a survey. 
+
+#### Oracle 1
+
+```{r}
+### LOOK AT THE SUMMARY OF ORACLE 1's DATA
+bball%>%
+  group_by(ORACLE1)%>%
+  summarise(n=n(), 
+            avg=mean(Salary))
+
+## IT LOOKS LIKE THERE ISN'T A BIG DIFFERENCE BETWEEN THE GROUPS
+```
+
+Since you spoke with this oracle you also know the truth of the universe, the true average salary. 
+
+```{r}
+## TRUE VALUE
+YU<-mean(bball$Salary)
+YU
+
+## VERIFY FROM TABLE ABOVE
+(127/635)*6141368+(508/635)*6234332
+```
+
+
+Now, pretend that we take a sample of n=150 from the respondent group many many times.  Doing this we can estimate the amount of bias.  
+
+```{r}
+### SIMULATE BIAS
+bias<-c()
+for(i in 1:1000){
+  oracle1_Resp<-bball%>%
+    filter(ORACLE1==1)
+  thisSamp<-sample(1:dim(oracle1_Resp)[1], 150, replace=FALSE)
+  thisYR<-mean(oracle1_Resp$Salary[thisSamp])
+  thisBias<-thisYR-YU
+  bias<-c(bias, thisBias)
+}
+
+bias_df1<-data.frame(run=1:1000, bias)
+
+## APPROX
+(127/635)*(6234332-6141368)
+
+ggplot(bias_df1, aes(x=run, y=bias))+
+  geom_point()+
+  geom_hline(yintercept = 18592.8, color="red")
+```
+
+#### Oracle 2
+
+Now, in a parallel universe, we go an talk to a different oracle.  
+
+```{r}
+### LOOK AT THE SUMMARY OF ORACLE 2's DATA
+bball%>%
+  group_by(ORACLE2)%>%
+  summarise(n=n(), 
+            avg=mean(Salary))
+
+## TRUE VALUE
+YU<-mean(bball$Salary)
+YU
+
+## IT LOOKS LIKE THERE IS BIG DIFFERENCE BETWEEN THE GROUPS
+```
+
+Now again, pretend that we take a sample of n=150 from the respondent group many many times.  Doing this we can estimate the amount of bias.  
+
+```{r}
+### SIMULATE BIAS
+bias2<-c()
+for(i in 1:1000){
+  oracle2_Resp<-bball%>%
+    filter(ORACLE2==1)
+  thisSamp<-sample(1:dim(oracle2_Resp)[1], 150, replace=FALSE)
+  thisYR<-mean(oracle2_Resp$Salary[thisSamp])
+  thisBias<-thisYR-YU
+  bias2<-c(bias2, thisBias)
+}
+
+bias_df2<-data.frame(run=1:1000, bias2)
+
+## APPROX
+(127/635)*(2059872-22839209)
+
+ggplot(bias_df2, aes(x=run, y=bias2))+
+  geom_point()+
+  geom_hline(yintercept = -4155867, color="red")
+
+```
+
+#### Moral of the Story
+
+We aren't oracles and we never know the truth.  If the group of nonrespondents is very different from the group of respondents are results will be unreliable and we can make the wrong conclusions!
+
+### Using Auxiliary Data
+
+Sometimes we may know something about the population from which we took the sample.  We can use this to check if our data appears to be representive of these dimensions 
+
+```{r}
+#### AUXILLARY DATA
+### LEAGUE
+LeTab<-table(bball$League)
+prop.table(LeTab)
+
+### POSITION
+PosTab<-table(bball$SimpPos)
+prop.table(PosTab)
+```
+
+#### Case 1: SRS in a Perfect World 
+
+In a perfect world, we would have no nonresponse.  The following simple random sample for generated previously in R. 
+
+```{r}
+#### SRS - NO NONRESPONSE
+## DOES THIS LOOK SAMPLE LOOK REPRESENTATIVE?
+
+ggplot(bball, aes(x=as.factor(SRS_0), fill=League))+
+  geom_bar(position="fill")
+
+```
+
+Look at the distribution: 
+
+```{r}
+## FILTER
+sampSRS_0<-bball%>%
+  filter(SRS_0==1)
+
+table(sampSRS_0$League)
+prop.table(table(sampSRS_0$League))
+
+## ITS NOT TOO BAD... LET'S KEEP GOING
+```
+
+
+Since we feel satisfied and this comes from an SRS, where all the weights are the same.  We can calculate the sample mean. 
+
+```{r}
+### CALCULATE THE MEAN FROM THE RESPONDENTS 
+
+## MEAN
+mean(sampSRS_0$Salary) ## ESTIMATE
+```
+
+If we are willing to make these assumptions and we have no other information this is the best we can do. 
+
+
+
+#### Case 2: SRS with MCAR 
+
+In reality we will have missing data.  First, let's explore data that is Missing Completely At Random!
+
+Now, when a respondent was selected but does not respond they will be represented in the data with an `NA`.
+
+```{r}
+#### SRS_MCAR
+### LOOK AT COLUMN
+head(bball$SRS_MCAR, 20)
+```
+
+Let's check the non-response rates across Leagues. 
+
+```{r}
+## DOES THIS LOOK SAMPLE LOOK REPRESENTATIVE?
+## LET'S LOOK AT THE NONRESPONSE RATES
+bball%>%
+  filter(is.na(SRS_MCAR)==TRUE | SRS_MCAR==1)%>%
+  group_by(League)%>%
+  summarise(nonRespR=mean(is.na(SRS_MCAR)))
+
+```
+
+These nonresponse rates are pretty similar.  
+
+```{r}
+## DOES THE SAMPLE LOOK REPRESENTATIVE
+## REMOVE NR
+sampSRS_MCAR<-bball%>%
+  filter(is.na(SRS_MCAR)==FALSE)%>%
+  filter(SRS_MCAR==1)
+
+table(sampSRS_MCAR$League)
+prop.table(table(sampSRS_MCAR$League))
+```
+If we are willing to move forward, we can calculate the sample mean. 
+
+```{r}
+## SAMPLE MEAN
+mean(sampSRS_MCAR$Salary) ## ESTIMATE
+```
+
+#### Case 3: SRS with MAR
+
+Now it's getting real!  There can be relationships between observed explanatory variables and the propensity to respond.  When this happens, we refer to it as missing at random (MAR).
+
+```{r}
+#### SRS_MAR
+## DOES THIS LOOK SAMPLE LOOK REPRESENTATIVE?
+## LET'S LOOK AT THE NONRESPONSE RATES
+bball%>%
+  filter(is.na(SRS_MAR)==TRUE | SRS_MAR==1)%>%
+  group_by(League)%>%
+  summarise(NonRespR=mean(is.na(SRS_MAR)))
+```
+
+OH NO!!! It look's like there is differential nonresponse!
+
+```{r}
+### OH NO!
+## REMOVE NR
+sampSRS_MAR<-bball%>%
+  filter(is.na(SRS_MAR)==FALSE)%>%
+  filter(SRS_MAR==1)
+
+table(sampSRS_MAR$League)
+prop.table(table(sampSRS_MAR$League))
+```
+It would not be wise to simple look at the sample mean here.
+
+```{r}
+## ESTIMATE
+mean(sampSRS_MAR$Salary)
+```
+
+### Weighting Adjustments for Nonresponse
+
+#### A. Weighting Class Adjustments
+
+GOAL: Redistribute weights within classes, such that response propensities vary from class to class but are homogenous within.
+
+STEPS: 
+
+* 1. Divide into weighting classes
+* 2. Redistribute sample weights
+* 3. Check weight adjustments
+
+##### 0. Prepare Data
+
+Add a column for the original weights. 
+
+```{r}
+### WEIGHTING CLASS
+### USE LEAGUE AS CLASSES 
+selectedMAR<-bball%>%
+  select(c("Player", "Salary", "League", "SRS_MAR"))%>%
+  filter(is.na(SRS_MAR)==TRUE | SRS_MAR==1)%>%
+  mutate(wi=635/150)### ORIGINAL WEIGHT 
+  
+
+head(selectedMAR)
+```
+
+
+##### 1. Divide into weighting classes
+
+```{r}
+### DIVIDE INTO CLASSES 
+weightClasses<-selectedMAR%>%
+  group_by(League, SRS_MAR)%>%
+  summarise(sumWgt=sum(wi))
+
+weightClasses
+```
+
+
+##### 2. Redistribute Weights
+
+```{r}
+### REDISTRIBUTE WEIGHTS
+selectedMAR1<-selectedMAR%>%
+  filter(SRS_MAR==1)%>%
+  mutate(WCA_multiplier=case_when(
+    League=="NBA"~ (1+114.3/347.133), 
+    League=="WNBA"~ (1+12.7/160.867), 
+  ))%>%
+  mutate(new_wi=wi*WCA_multiplier)
+
+head(selectedMAR1)
+```
+
+##### 3. Check TOTAL
+
+```{r}
+### STEP 3: CHECK
+sum(selectedMAR1$new_wi)
+
+## CLOSE BUT A TINY BIT OF ROUNDING ERROR
+```
+
+
+##### 4. Weighted Estimate
+
+```{r}
+### WEIGHTED ESTIMATE
+numerator<-sum(selectedMAR1$new_wi*selectedMAR1$Salary)
+numerator
+denominator<-sum(selectedMAR1$new_wi)
+denominator
+
+### AVERAGE
+numerator/denominator ### MUCH BETTER!
+```
+
+
+#### B. Poststratification 
+
+If you know the count within your sample of a characteristic (or even multiple characteristics together) you can create stratification weights. 
+
+##### 1. Distribution in the Sample
+```{r}
+### POSTSTRATIFIED
+sampSRS_MAR%>%
+  group_by(League)%>%
+  summarise(n=n())
+
+### TRUTH
+LeTab
+```
+
+##### 2. Poststratification Weights
+
+```{r}
+### POST STRAT WEIGHTS
+### NBA
+467/82
+### WNBA
+168/38
+
+### ADD POST-STRAT WEIGHTS
+#head(sampSRS_MAR)
+
+postStrat_MAR<-sampSRS_MAR%>%
+  select(c("Player", "Salary", "League", "SRS_MAR"))%>%
+  mutate(wi_star=case_when(
+    League=="NBA" ~ 467/82, 
+    League=="WNBA" ~ 168/38
+  ))
+
+head(postStrat_MAR)
+```
+
+##### 3. Don't forget to check your work!
+
+```{r}
+## CHECK
+sum(postStrat_MAR$wi_star)
+```
+
+##### 4. Weighted Estimate
+
+```{r}
+### PS WEIGHTED ESTIMATE
+numeratorPS<-sum(postStrat_MAR$wi_star*postStrat_MAR$Salary)
+numeratorPS
+denominatorPS<-sum(postStrat_MAR$wi_star)
+denominatorPS
+
+### PS AVERAGE
+numeratorPS/denominatorPS ### EVEN BETTER!
+```
+
+#### COMPARE
+
+```{r}
+### TRUTH
+YU
+
+### WEIGHTING CLASS
+numerator/denominator
+
+### POSTSTRAT
+numeratorPS/denominatorPS
+```
+
