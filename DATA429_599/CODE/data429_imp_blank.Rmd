@@ -1,0 +1,228 @@
+---
+title: 'DATA429/599: Item Nonresponse and Imputation '
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives: 
+
+In this lesson students will learn to:
+
+* Visualize missing data
+* Implement imputation methods
+
+### The Data
+
+These data were put together from NBA and WNBA records for the 2022-2023 and 2022 seasons, respecitively.
+
+For this activity we are going to pretend that we are doing a survey on professional basketball players.  These data represent only the raw responses to the survey.  These data reflect a subset of the NBA and WNBA 2022 population and also reflects nonresponse. 
+
+Download the data here: 
+
+```{r}
+## DOWNLOAD RAW SURVEY DATA
+bballSurv<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/CODE/raw_bballSurvey.csv")
+
+str(bballSurv)
+```
+
+### 1. Exploring the Data
+
+Let's to a quick EDA to look for patterns.  How about a pairs plot?!
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+
+### PAIRS PLOT
+#install.packages("GGally")
+library(GGally)
+
+ggpairs(bballSurv, columns = c(5, 7:18))
+```
+
+The leagues have different styles of game play which might impact the relationships between the variables. 
+
+```{r, message=FALSE, warning=FALSE}
+### ADD COLOR
+### INSERT CODE HERE ###
+```
+
+#### What happens if we wanted to model salary?
+
+Consider the following two models. 
+
+##### Model 1: 
+
+```{r}
+#### WHAT HAPPENS WITH MISSING DATA
+### SALARY AS A FUNCTION OF PTS AND LEAGUE
+mod1<-lm(Salary~PTS+League, data=bballSurv)
+summary(mod1)
+```
+
+##### Model 2: 
+
+```{r}
+### SALARY AS A FUNCTION OF PTS AND LEAGUE AND AST
+mod2<-lm(Salary~PTS+AST+League, data=bballSurv)
+summary(mod2)
+```
+
+
+These models are not actually comparable due to missing data!  If any row in the data has a missing value for variables used in the model, that whole line will be removed.  This is called listwise deletion.  
+
+### 2. Visualizing Missing Data
+
+#### A. Using 'dplyr' 
+
+In our first attempt, we might be curious about how pervasive nonresponse is. 
+
+First, let's try to understand how complete the records are.  How many nonresponses does each individual have? 
+
+```{r}
+### NONRESP BY PLAYER
+nonR<-bballSurv%>%
+  is.na()%>%
+  rowSums()
+
+### MAKE A NEW DATAFRAME
+playerNR<-bballSurv%>%
+  select("Player")%>%
+  cbind(nonR)%>%
+  mutate(respR=(14-nonR)/14)
+
+### PLOT THE FREQ
+### COMPLETE >= 80%
+### PARTIAL [50, 80)
+### BREAKOFF < 50%
+ggplot(data=playerNR, aes(x=respR))+
+  geom_histogram()+
+  geom_vline(xintercept = .8, color="blue", lwd=1.5, lty=2)+
+  geom_vline(xintercept = .5, color="red", lwd=1.5, lty=2)+
+  theme_bw()
+```
+
+Now, lets look at the frequency of nonresponse across the variables. 
+
+```{r}
+### NONRESP BY VAR
+## INSERT CODE HERE ##
+```
+Do any variables seem to get missed significantly more than others? 
+
+#### B. Visualize Missing Data
+
+Let's make a graphic to see where the missing data are. 
+
+```{r}
+### VISUALIZE MISSING
+#install.packages("visdat")
+library(visdat)
+
+## INSERT CODE HERE ##
+```
+#### C.  Patterns in Missing Data
+
+Sometimes there are relationships between variables such that there is a higher occurrence of multiple variables missing at the same time. 
+
+```{r}
+### VIM
+#install.packages("VIM")
+library(VIM)
+
+## INSERT CODE HERE ##
+```
+
+It's hard to see with this many variables, let's just look at a select few:
+
+```{r}
+### MAYBE WE SHOULD LOOK AT LESS VARIABLES
+## SALARY, PTS, GP, GS, MP, FG, AST 
+
+## INSERT CODE HERE ##
+
+```
+
+### 3. Imputation 
+
+Imputation is the practice of using statistical methods to fill in missing data. 
+
+#### A. Mean Imputation
+
+Mean imputation replaces missing values with the average.  
+
+```{r}
+#### MEAN IMPUTATION
+## CREATE INDICATORS
+## REPLACE WITH MEANS
+
+## INSERT CODE HERE ##
+
+### MARGIN PLOT
+## INSERT CODE HERE ##
+  
+## THIS IS NOT GREAT
+## THERE IS NOT ENOUGH VARIABILITY 
+```
+#### B. HOT DECK
+
+Hotdeck imputation takes "donor" from previous complete data records. 
+
+```{r}
+#### VANILLA HOT DECK
+## INSERT CODE HERE ##
+
+### MARGIN PLOT
+## INSERT CODE HERE ##
+```
+
+The problem here is that this just borrows the previous value, but often due to relationships/correlations between variables, we should reorder the data to borrow a "better" value. 
+
+```{r}
+## PUT IN ORDER (NUM) - GP
+## INSERT CODE HERE ##
+
+## MARGIN PLOT
+## INSERT CODE HERE ##
+```
+
+Similarly, there can be similar values within groups.  
+
+```{r}
+## PUT IN GROUPS (SimpPos)
+## INSERT CODE HERE ##
+
+## MARGIN PLOT
+## INSERT CODE HERE ##
+```
+
+#### C. K-Nearest Neighbors
+
+Consider (completed) respondents similar to the one with missing data.  Then average their responses. 
+
+```{r}
+### KNN (5)
+## INSERT CODE HERE ##
+
+### MARGIN
+## INSERT CODE HERE ##
+```
+
+We could also do a weighted average so that the neighbors don't have equal weight.
+
+```{r}
+## KNN - WEIGHTED
+
+## INSERT CODE HERE ##
+
+### MARGINAL
+## INSERT CODE HERE ##
+```
+
