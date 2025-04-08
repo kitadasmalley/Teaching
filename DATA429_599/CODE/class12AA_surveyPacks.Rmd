@@ -1,0 +1,136 @@
+---
+title: 'DATA429/599: Intro to Survey Packages '
+output:
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+---
+
+### Learning Objectives: 
+
+In this lesson students will learn to:
+
+* Use survey packages in R
+* Define survey objects 
+* Inference for the mean
+
+### The Data
+
+These data were put together from NBA and WNBA records for the 2022-2023 and 2022 seasons, respecitively.
+
+For this activity we are going to pretend that we are doing a survey on professional basketball players.  These data represent only the raw responses to the survey.  These data reflect a subset of the NBA and WNBA 2022 population who respondend to the hypothetical survey.  Note that survey weights have been created to adjust for nonresponse. 
+
+Download the data here: 
+
+```{r}
+## DOWNLOAD COMPLETE SURVEY DATA
+bballComp<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/CODE/bballSampComplete.csv")
+
+str(bballComp)
+```
+
+### 1. Survey Packages
+
+Load in survey packages.  
+
+```{r message=FALSE, warning=FALSE}
+#### SURVEY PACKAGES
+#install.packages("survey")
+#install.packages("srvyr")
+library(tidyverse)
+library(survey)
+library(srvyr)
+```
+
+The new 'srvyr' package utilizes the 'tidyverse' syntax. 
+
+### 2. Define a Survey Design Object
+
+First, we must define a survey design object by mapping to the column with the final weights.  The fpc argument tells R that the sample is finite and without replacement. This should be one number that denotes how large the sampling frame is. 
+
+```{r}
+### SURVEY DESIGN OBJECT
+bball_des<- bballComp %>%
+  as_survey_design(
+    weights = wi_star, #WEIGHTS
+    fpc = fpcBball # WITHOUT REPLACEMENT
+  )
+
+bball_des
+```
+
+### 3. Estimating Means
+
+Weighted graphics
+
+```{r}
+### WEIGHTED GRAPHIC
+ggplot(bballComp, aes(x = FGP, 
+                          y = ..density.., 
+                          weight = wi_star)) + 
+  geom_histogram()
+
+```
+
+
+```{r}
+### MEANS AND SE AND CI
+
+bball_des %>%
+  summarize(fgp = survey_mean(FGP,
+                              vartype = c("se", "ci")
+  ))
+
+```
+
+Let's confirm our weighted estimate:
+
+```{r}
+### CONFIRM
+## POINT EST
+num<-sum(bballComp$wi_star*bballComp$FGP)
+den<-sum(bballComp$wi_star)
+num/den ### CHECKS OUT 
+
+### COMPARE TO UNWEIGHTED
+mean(bballComp$FGP)
+```
+
+### 4. One Sample T-Test
+
+Test for average field goal percentage being 0.50.
+
+```{r}
+## ONE T-TEST
+### FGP 
+ttest_ex1 <- bball_des %>%
+  svyttest(
+    formula = FGP -.50 ~ 0,
+    design = .,
+    na.rm = TRUE
+  )
+
+ttest_ex1
+
+## BACK TRANSFROM
+ttest_ex1$estimate +.5
+```
+### 5. Two Sample T-test to Compare Means
+
+```{r}
+## TWO T-TEST
+ttest_ex2 <- bball_des %>%
+  svyttest(
+    formula = FGP ~ League,
+    design = .,
+    na.rm = TRUE
+  )
+
+ttest_ex2
+```
+
