@@ -1,0 +1,215 @@
+---
+title: 'DATA429/599: Survey Analysis for Categorical Responses'
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives: 
+
+In this lesson students will learn to:
+
+* Use survey packages in R
+* Weight data based on auxiliary information
+* Analyze categorical responses 
+
+## Example: Thanksgiving Survey
+
+### 0. The Data: 
+
+We are using the data from fivethirtyeight the Here’s What Your Part of America Eats on Thanksgiving article <https://fivethirtyeight.com/features/heres-what-your-part-of-america-eats-on-thanksgiving/>
+
+The original data set can be found here: <https://raw.githubusercontent.com/fivethirtyeight/data/master/thanksgiving-2015/thanksgiving-2015-poll-data.csv>
+
+The variables for the survey are described here:<https://github.com/fivethirtyeight/data/tree/master/thanksgiving-2015>
+
+I cleaned up the data, selected a subset of variables, and created binary variables. My dataset can be found here: <https://raw.githubusercontent.com/kitadasmalley/FA2020_DataViz/main/data/useThanks.csv>
+
+```{r}
+### fivethirtyeight
+### THANKSGIVING
+
+useThanks<-read.csv("https://raw.githubusercontent.com/kitadasmalley/FA2020_DataViz/main/data/useThanks.csv",
+                    header=TRUE)
+
+names(useThanks)
+```
+
+
+
+### 1. Weighting the Data
+
+How many people in the sample are from each division? 
+
+```{r}
+library(tidyverse)
+
+### SAMPLE DIVISION
+## INSERT CODE HERE ##
+```
+
+We can use Census data to help re-balance the data. 
+
+```{r}
+### CENSUS DATA
+popDiv<-data.frame(DivName=c("East North Central",
+                             "East South Central", 
+                             "Middle Atlantic", 
+                             "Mountain", 
+                             "New England", 
+                             "Pacific", 
+                             "South Atlantic", 
+                             "West North Central", 
+                             "West South Central"), 
+                   pop=c(46798649, 
+                         18931477,
+                         41601787,
+                         23811346,
+                         14757573,
+                         52833604,
+                         63991523,
+                         21179519,
+                         39500457))
+```
+
+Create weights: 
+
+```{r}
+### WEIGHTS
+## INSERT CODE HERE ##
+```
+
+Join to the data
+
+```{r}
+#### JOIN ON TO THE DATA
+## INSERT CODE HERE ##
+```
+
+
+### 2. Survey Object
+
+We will pretend that these data come from a simple random sample:
+
+```{r warning=FALSE, message=FALSE}
+library(survey)
+library(srvyr)
+
+### MAKE SURVEY OBJECT
+### SURVEY DESIGN OBJECT
+## INSERT CODE HERE ##
+```
+
+Let's check to make sure the weights sum to yield the size of each division
+
+```{r}
+### ESTIMATE SIZE
+## INSERT CODE HERE ##
+```
+
+Look at the national proportions
+
+```{r}
+### PROPORTIONS BY DIVISION
+
+## INSERT CODE HERE ##
+```
+
+### 3. Investigating Cranberry Sauce
+
+```{r}
+### SAMPLE PROPORTIONS
+## INSERT CODE HERE ##
+```
+
+### 4. Subgroups
+
+Are there differences in this distribution across divisions? 
+
+```{r}
+### COMPARING CANNED VS HOMEMADE
+## INSERT CODE HERE ##
+```
+
+We can visualize these propotions with a filled bar graph
+
+```{r}
+## FILLED BAR GRAPH
+## INSERT CODE HERE ##
+```
+
+We can improve this by ordering the division names
+
+```{}
+### REORDER
+divCranOrd<-divCran%>%
+  filter(cranberry=="Canned")%>%
+  arrange(desc(p))
+
+
+joinThanks$DivName<-factor(joinThanks$DivName, levels=divCranOrd$DivName)
+
+thanks_des<- joinThanks %>%
+  as_survey_design(
+    weights = weight, #WEIGHTS
+    fpc = FPC # WITHOUT REPLACEMENT
+  )
+
+thanks_des %>%
+  filter(cranberry%in%c("Canned", "Homemade"))%>%
+  ggplot(aes(x=DivName, y=weight, fill=cranberry))+
+  geom_bar(stat = "identity", position="fill")+
+  coord_flip()
+```
+
+### 5. Chi-Squared Test
+
+Test: 
+
+```{r}
+### CHISQR TEST
+## INSERT CODE HERE ##
+```
+
+
+Raw Table: 
+
+```{}
+## RAW TABLE
+chiCranObs<- thanks_des %>%
+  filter(cranberry%in%c("Canned", "Homemade"))%>%
+  group_by(DivName, cranberry) %>%
+  summarize(Observed = round(survey_mean(vartype = "ci"), 3))
+
+chiCranObs
+```
+
+Formatted Table: 
+
+```{}
+### FORMATTED TABLE
+#install.packages("gt")
+library(gt)
+
+chiCranTab<- chiCranObs %>%
+  mutate(prop = paste0(
+    Observed, " (", Observed_low, ", ",
+    Observed_upp, ")"
+  )) %>%
+  select(DivName, cranberry, prop) %>%
+  pivot_wider(
+    names_from = DivName,
+    values_from = prop
+  ) %>%
+  gt(rowname_col = "cranberry") %>%
+  tab_stubhead(label = "Cranberry")
+
+chiCranTab
+```
+

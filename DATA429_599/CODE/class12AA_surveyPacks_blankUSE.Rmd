@@ -1,0 +1,224 @@
+---
+title: 'DATA429/599: Intro to Survey Packages '
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives: 
+
+In this lesson students will learn to:
+
+* Use survey packages in R
+* Define survey objects 
+* Inference for the mean
+
+### The Data
+
+These data were put together from NBA and WNBA records for the 2022-2023 and 2022 seasons, respecitively.
+
+For this activity we are going to pretend that we are doing a survey on professional basketball players.  These data represent only the raw responses to the survey.  These data reflect a subset of the NBA and WNBA 2022 population who respondend to the hypothetical survey.  Note that survey weights have been created to adjust for nonresponse. 
+
+Download the data here: 
+
+```{r}
+## DOWNLOAD COMPLETE SURVEY DATA
+bballComp<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/CODE/bballSampComplete.csv")
+
+str(bballComp)
+```
+
+### 1. Survey Packages
+
+Load in survey packages.  
+
+```{r message=FALSE, warning=FALSE}
+#### SURVEY PACKAGES
+#install.packages("survey")
+#install.packages("srvyr")
+library(tidyverse)
+library(survey)
+library(srvyr)
+```
+
+The new 'srvyr' package utilizes the 'tidyverse' syntax. 
+
+### 2. Define a Survey Design Object
+
+First, we must define a survey design object by mapping to the column with the final weights.  The fpc argument tells R that the sample is finite and without replacement. This should be one number that denotes how large the sampling frame is. 
+
+```{r}
+### SURVEY DESIGN OBJECT
+
+## INSTERT CODE HERE ##
+```
+
+### 3. Estimating Means
+
+Weighted graphics
+
+```{r}
+### WEIGHTED GRAPHIC
+## INSTERT CODE HERE ##
+
+```
+
+
+```{r}
+### MEANS AND SE AND CI
+
+## INSTERT CODE HERE ##
+
+```
+
+Let's confirm our weighted estimate:
+
+```{r}
+### CONFIRM
+## POINT EST
+## INSTERT CODE HERE ##
+
+### COMPARE TO UNWEIGHTED
+## INSTERT CODE HERE ##
+```
+
+### 4. One Sample T-Test
+
+Is the average field goal percent for professional basketball players in the 2022 season $50\%$?  
+
+
+```{r}
+## ONE T-TEST
+### FGP 
+## INSTERT CODE HERE ##
+
+## BACK TRANSFROM
+## INSTERT CODE HERE ##
+```
+### 5. Two Sample T-test to Compare Means
+
+Is the average field goal percent for professional basketball players in the 2022 season different for NBA and WNBA?  
+
+
+```{r}
+## TWO T-TEST
+## INSTERT CODE HERE ##
+```
+
+
+### 6. One Sample T-Test for Proportion
+
+Although the average field goal percentage (FGP) is not $50\%$, there are still some professional basketball players who have an FGP that is greater than $50\%$.  How many are there? 
+
+```{r}
+### PROPORTION FGP>50%
+## INSTERT CODE HERE ##
+```
+
+Suppose that you had a friend who was a big basketball fan and they claimed that $10\%$ percent of players with a FGP greater than $50\%$.  Do we have evidence to support that?
+
+```{r}
+### ONE SAMPLE PROP
+## INSTERT CODE HERE ##
+
+## BACK TRANSFROM
+## INSTERT CODE HERE ##
+```
+
+
+
+### 7. Two Sample T-Test for Proportions 
+
+A filled bar graph is useful for visualizing differences, while conditioning in the subgroups. 
+
+```{r}
+### BAR GRAPH : COMPARE LEAGUES
+## WEIGHTED
+## INSTERT CODE HERE ##
+```
+
+Now let's compare the proportions across the two leagues. 
+
+```{r}
+### TABLE
+### PROPORTION FGP>50%
+### COMPARE NBA and WNBA
+## INSTERT CODE HERE ##
+```
+
+
+
+We can also look at position: 
+
+```{r}
+### COMPARE POSITIONS
+## INSTERT CODE HERE ##
+```
+
+Now make a table:
+
+```{r}
+### TABLE
+### PROPORTION FGP>50%
+### COMPARE SimpPos
+## INSTERT CODE HERE ##
+```
+
+It looks like there is a difference in point estimates, is this significant? 
+
+
+### 8. Chi-Squared Test for Independence
+
+
+We can make a table for this
+
+```{r}
+#install.packages("gt")
+library(gt)
+
+bball_des<- bballComp %>%
+  as_survey_design(
+    weights = wi_star, #WEIGHTS
+    fpc = fpcBball # WITHOUT REPLACEMENT
+  )
+
+### TABLE
+chi_CI <- bball_des %>%
+  mutate(FGP50=(FGP>.50))%>%
+  group_by(SimpPos, FGP50) %>%
+  summarize(Observed = round(survey_mean(vartype = "ci"), 3))
+
+chi_CI 
+
+### FORMAT INTO TABLE
+
+chi_CI_tab <- chi_CI  %>%
+  mutate(prop = paste0(
+    Observed, " (", Observed_low, ", ",
+    Observed_upp, ")"
+  )) %>%
+  select(FGP50, SimpPos, prop) %>%
+  pivot_wider(
+    names_from = SimpPos,
+    values_from = prop
+  ) %>%
+  gt(rowname_col = "SimpPos")%>%
+  tab_stubhead(label = "SimpPos")
+
+chi_CI_tab
+```
+
+We could also do a chi-squared test of homogeneity: 
+
+```{r}
+### CHI SQR
+### LEAGUE vs FGP50
+## INSTERT CODE HERE ##
+```
+
