@@ -1,0 +1,427 @@
+---
+title: 'DATA429/599: Survey Analysis for Categorical Responses'
+output:
+  html_document:
+    toc: true
+    collapsed: false
+    toc_float: true
+    toc_depth: 5
+  pdf_document:
+    toc: true
+    toc_depth: '5'
+---
+
+### Learning Objectives: 
+
+In this lesson students will learn to:
+
+* Use survey packages in R
+* Weight data based on auxiliary information
+* Analyze categorical responses 
+
+## Example: Thanksgiving Survey
+
+### 0. The Data: 
+
+We are using the data from fivethirtyeight the Here’s What Your Part of America Eats on Thanksgiving article <https://fivethirtyeight.com/features/heres-what-your-part-of-america-eats-on-thanksgiving/>
+
+The original data set can be found here: <https://raw.githubusercontent.com/fivethirtyeight/data/master/thanksgiving-2015/thanksgiving-2015-poll-data.csv>
+
+The variables for the survey are described here:<https://github.com/fivethirtyeight/data/tree/master/thanksgiving-2015>
+
+I cleaned up the data, selected a subset of variables, and created binary variables. My dataset can be found here: <https://raw.githubusercontent.com/kitadasmalley/FA2020_DataViz/main/data/useThanks.csv>
+
+```{r}
+### fivethirtyeight
+### THANKSGIVING
+
+useThanks<-read.csv("https://raw.githubusercontent.com/kitadasmalley/FA2020_DataViz/main/data/useThanks.csv",
+                    header=TRUE)
+
+names(useThanks)
+```
+
+
+
+### 1. Weighting the Data
+
+How many people in the sample are from each division? 
+
+```{r}
+library(tidyverse)
+
+### SAMPLE DIVISION
+## INSERT CODE HERE ##
+```
+
+We can use Census data to help re-balance the data. 
+
+```{r}
+### CENSUS DATA
+popDiv<-data.frame(DivName=c("East North Central",
+                             "East South Central", 
+                             "Middle Atlantic", 
+                             "Mountain", 
+                             "New England", 
+                             "Pacific", 
+                             "South Atlantic", 
+                             "West North Central", 
+                             "West South Central"), 
+                   pop=c(46798649, 
+                         18931477,
+                         41601787,
+                         23811346,
+                         14757573,
+                         52833604,
+                         63991523,
+                         21179519,
+                         39500457))
+```
+
+Create weights: 
+
+```{r}
+### WEIGHTS
+## INSERT CODE HERE ##
+```
+
+Join to the data
+
+```{r}
+#### JOIN ON TO THE DATA
+## INSERT CODE HERE ##
+```
+
+
+### 2. Survey Object
+
+We will pretend that these data come from a simple random sample:
+
+```{r warning=FALSE, message=FALSE}
+library(survey)
+library(srvyr)
+
+### MAKE SURVEY OBJECT
+### SURVEY DESIGN OBJECT
+## INSERT CODE HERE ##
+```
+
+Let's check to make sure the weights sum to yield the size of each division
+
+```{r}
+### ESTIMATE SIZE
+## INSERT CODE HERE ##
+```
+
+Look at the national proportions
+
+```{r}
+### PROPORTIONS BY DIVISION
+
+## INSERT CODE HERE ##
+```
+
+### 3. Investigating Cranberry Sauce
+
+```{r}
+### SAMPLE PROPORTIONS
+## INSERT CODE HERE ##
+```
+
+### 4. Subgroups
+
+Are there differences in this distribution across divisions? 
+
+```{r}
+### COMPARING CANNED VS HOMEMADE
+## INSERT CODE HERE ##
+```
+
+We can visualize these propotions with a filled bar graph
+
+```{r}
+## FILLED BAR GRAPH
+## INSERT CODE HERE ##
+```
+
+We can improve this by ordering the division names
+
+```{}
+### REORDER
+divCranOrd<-divCran%>%
+  filter(cranberry=="Canned")%>%
+  arrange(desc(p))
+
+
+joinThanks$DivName<-factor(joinThanks$DivName, levels=divCranOrd$DivName)
+
+thanks_des<- joinThanks %>%
+  as_survey_design(
+    weights = weight, #WEIGHTS
+    fpc = FPC # WITHOUT REPLACEMENT
+  )
+
+thanks_des %>%
+  filter(cranberry%in%c("Canned", "Homemade"))%>%
+  ggplot(aes(x=DivName, y=weight, fill=cranberry))+
+  geom_bar(stat = "identity", position="fill")+
+  coord_flip()
+```
+
+### 5. Chi-Squared Test
+
+Test: 
+
+```{r}
+### CHISQR TEST
+## INSERT CODE HERE ##
+```
+
+
+Raw Table: 
+
+```{}
+## RAW TABLE
+chiCranObs<- thanks_des %>%
+  filter(cranberry%in%c("Canned", "Homemade"))%>%
+  group_by(DivName, cranberry) %>%
+  summarize(Observed = round(survey_mean(vartype = "ci"), 3))
+
+chiCranObs
+```
+
+Formatted Table: 
+
+```{}
+### FORMATTED TABLE
+#install.packages("gt")
+library(gt)
+
+chiCranTab<- chiCranObs %>%
+  mutate(prop = paste0(
+    Observed, " (", Observed_low, ", ",
+    Observed_upp, ")"
+  )) %>%
+  select(DivName, cranberry, prop) %>%
+  pivot_wider(
+    names_from = DivName,
+    values_from = prop
+  ) %>%
+  gt(rowname_col = "cranberry") %>%
+  tab_stubhead(label = "Cranberry")
+
+chiCranTab
+```
+
+## Example 2: Religion Survey
+
+These data come from the fivethirtyeight article "When Does Praying In Public Make Others Uncomfortable?" 
+<https://fivethirtyeight.com/features/when-does-praying-in-public-make-others-uncomfortable/>
+
+This survey was fielded from July 29 and August 1, 2016.
+
+The original data can be accessed here: 
+<https://www.kaggle.com/datasets/tunguz/religion-survey/data>.
+
+
+### 0. The Data
+
+```{r}
+### DATA ON GITHUB
+rel<-read.csv("https://raw.githubusercontent.com/kitadasmalley/Teaching/refs/heads/main/DATA429_599/CODE/religion-survey-results.csv", 
+              header=TRUE)
+
+head(names(rel))
+tail(names(rel))
+```
+### 1. Rename Variables 
+
+These are very long variable names.  Let's make these shorter and easier to work with. 
+
+```{r}
+shortColNames<-c("Religion", "RelOther", "Evangelical", "AttendServices", 
+                 ### SET 1: HOW OFTEN (cols 5 thru 14)
+                 "PrayMotions_Often", "PrayObject_Often", "PrayMeals_Often", "PrayFor_Often", 
+                 "PrayWith_Often", "RelConvo_Often", "RelAsk_Often", "Dietary_Often", 
+                 "WearRel_Often","PublicRel_Often",
+                 
+                 ### SET 2: HOW COMFORTABLE DO YOU FEEL (cols 15 thru 24)
+                 "PrayMotions_Comfort", "PrayObject_Comfort", "PrayMeals_Comfort", "PrayFor_Comfort", 
+                 "PrayWith_Comfort", "RelConvo_Comfort", "RelAsk_Comfort", "Dietary_Comfort", 
+                 "WearRel_Comfort","PublicRel_Comfort",
+                 
+                 ### SET 3: HOW COMFORTABLE DO YOU THINK SOMEONE OUTSIDE (cols 25 thru 34)
+                 "PrayMotions_Outside", "PrayObject_Outside", "PrayMeals_Outside", "PrayFor_Outside", 
+                 "PrayWith_Outside", "RelConvo_Outside", "RelAsk_Outside", "Dietary_Outside", 
+                 "WearRel_Outside","PublicRel_Outside",
+                 
+                 ### SET 4: HOW COMFORTABLE WOULD YOU BE SEEING SOMEONE WHO PRACTICES A DIFFERENT REL (cols 35 thru 44)
+                 "PrayMotions_Different", "PrayObject_Different", "PrayMeals_Different", "PrayFor_Different", 
+                 "PrayWith_Different", "RelConvo_Different", "RelAsk_Different", "Dietary_Different", 
+                 "WearRel_Different","PublicRel_Different",
+                 
+                 ### DEMOS
+                 "Age", "Gender", "Income", "US.Region"
+                 
+                 )
+
+#### NEW NAMES
+
+colnames(rel)<-shortColNames
+
+str(rel)
+```
+
+
+### 2. Weighting the Data
+
+How many people in the sample are from each division (which in this dataset is called US.Region)? 
+
+```{r}
+library(tidyverse)
+
+### SAMPLE DIVISION (IN THIS DATASET USE US.Region)
+## INSERT CODE HERE ###
+```
+
+Now we can join the sample data and calculate weights again.  Please use the auxiliary data above for state divisions. 
+
+```{r}
+### CALCULATE WEIGHTS
+## INSERT CODE HERE ###
+```
+
+Finally, we join the weights back on to the data
+
+```{r}
+### JOIN RELIGION DATA
+## INSERT CODE HERE ###
+```
+
+
+### 3. Survey Object
+
+We will pretend that these data come from a simple random sample:
+
+```{r warning=FALSE, message=FALSE}
+library(survey)
+library(srvyr)
+
+### MAKE SURVEY OBJECT
+### SURVEY DESIGN OBJECT
+## INSERT CODE HERE ###
+```
+
+### 4A. Estimate Religions in America
+
+Counts: 
+```{r}
+### COUNTS
+### RELIGIOUS IDENTITY
+## INSERT CODE HERE ###
+```
+
+Proportions: 
+```{r}
+### PROP BY GROUP
+## INSERT CODE HERE ###
+```
+
+### 4B. Dietary Law and Fasting
+
+Many religions observe dietary laws (such as kosher or halal) and fasting.  Let's explore the level of comfort that survey respondents reported when asked the following question "How comfortable do you feel when you: Decline some kind of food or beverage for religious reasons (kosher, halal, fasting rules, etc)?".  We will use the variable 'Dietary_Comfort'. 
+
+```{r}
+### HOW MANY PEOPLE REPORTED EACH LEVEL OF COMFORT
+### USE Dietary_Comfort
+
+### FASTING 
+## INSERT CODE HERE ###
+```
+
+We might want to look at the proportions for each level: 
+
+```{r}
+### PROPORTIONS FOR Dietary_Comfort
+## INSERT CODE HERE ###
+```
+
+It looks like there is a a fair amount of non-response and people who do not engage in dietary laws or fasting.  Given the estimated proportions for these two groups, how many Americans can we estimate engaged in observing dietary laws or fasting? 
+
+```{r}
+### YOUR TURN
+```
+
+### 5. Focusing the Data
+
+Let's look at only people who engage in dietary law or fasting.  
+
+We also are going to group the two top categories, which convey the most positive sentiment.  
+
+```{r}
+### SHOULD CONDITION ON PEOPLE WHO PRACTICE FASTING
+## INSERT CODE HERE ###
+```
+
+### 6. Table of Estimates
+
+Suppose that we want to look at the relationship between different religions and comfortably with dietary law and/or fasting. 
+```{r}
+### Observations
+## INSERT CODE HERE ###
+```
+
+Now we can organize this in a nice table: 
+
+```{}
+#install.packages("gt")
+library(gt)
+
+fastTab<- fastObs %>%
+  mutate(prop = paste0(
+    Observed, " (", Observed_low, ", ",
+    Observed_upp, ")"
+  )) %>%
+  select(Religion, DietaryComfort, prop) %>%
+  pivot_wider(
+    names_from = Religion,
+    values_from = prop
+  ) %>%
+  gt(rowname_col = "DietaryComfort") %>%
+  tab_stubhead(label = "Fasting Comfort")
+
+fastTab
+```
+
+
+Note the NA for people who Agnostic and do not feel uncomfortable. 
+
+Let's make a graph to go with that
+
+```{r}
+## FILLED BAR GRAPH
+## INSERT CODE HERE ###
+```
+
+### 7. Chi-Squared Test
+
+Suppose we want to explore if there are differences in comfort across the different religious groups. 
+
+```{r}
+### CHI SQUARED
+### CHISQ
+## INSERT CODE HERE ###
+```
+
+
+### 8. Logistic Regression 
+
+What if we want to explore the odds with more than one variable?  We can model that! 
+
+```{r}
+### LOGISTIC
+### LOOK AT RELIGION, AGE, AND GENDER
+## INSERT CODE HERE ###
+```
+
+
