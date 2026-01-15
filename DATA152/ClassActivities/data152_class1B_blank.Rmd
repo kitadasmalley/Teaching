@@ -1,0 +1,130 @@
+---
+title: 'DATA152: Motivating Examples'
+author: "STUDENT NAME"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+### Learning Objectives
+
+Students will learn how to...
+
+* Create a tidy data frame in R 
+* Use the tidyverse to create exploratory graphics 
+* Evaluate arguments based on numerical evidence
+
+
+
+### Example 1: Is Yawning Contageous?
+
+MythBusters was a show on Discovery Channel from 2003 to 2016.
+
+Each episode typically focused on investigating “popular beliefs, internet rumors, or other myths” by designing experiments and collecting data. 
+
+In Season 3 Episode 4 (aired March 9, 2005), the MythBuster team explored “Is Yawning Contagious” 
+
+
+Data Source Citations: 
+
+* Information about episode: <https://www.imdb.com/title/tt0768479/>
+
+
+#### Step 0: Tidyverse
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+#### Step 1: Load the data into R. Create a data frame.
+
+```{r}
+### MYTHBUSTERS
+
+### TREATMENT COLUMN
+trt<-c(rep("Control", 12), 
+       rep("Control", 4), 
+       rep("Seeded", 24), 
+       rep("Seeded", 10))
+
+### YAWN (RESPONSE) COLUMN
+## INSERT CODE HERE ##
+
+### MAKE A DATAFRAME
+## INSERT CODE HERE ##
+
+### LOOK AT THE STRUCTURE
+## INSERT CODE HERE ##
+```
+
+#### Step 2: Look at the data! 
+
+Let's look at bar graphs, which one best tells the story of these data.
+
+```{r}
+## BAR GRAPH
+## INSERT CODE HERE ##
+
+## STACKED BAR
+## INSERT CODE HERE ##
+
+## FILLED BAR
+## INSERT CODE HERE ##
+```
+
+#### Step 3: Evaluating Numerical Evidence
+
+* 1. What percent of participants in the treatment group yawned?
+
+* 2. What percent experienced yawned in the control group?
+
+* 3. In which group did a higher percentage of participants yawn?
+
+* 4. What is one other possible explanation for the observed difference between the percentages?
+
+### Example 2: Diabetes 
+
+These data represent diabetes test results and biometrics on women of Pima Indian (Akimel O'odham) heritage, who were at least 21 years of age.
+
+Data Source Citations: 
+
+These data come from the pdp R package. 
+
+#### Step 0: Installing the Package and Calling the Library
+
+```{r}
+#install.packages("pdp")
+library(pdp)
+```
+
+#### Step 1: Calling the Data
+
+```{r}
+## DATA IS CALLED 'pima'
+## INSERT CODE HERE ##
+```
+
+#### Step 2: Explore the Data
+
+Boxplot: 
+
+```{r}
+## BOXPLOT
+## INSERT CODE HERE ##
+```
+
+Density: 
+
+```{r}
+## DENSITY
+## INSERT CODE HERE ##
+```
+
+Scatter plot: 
+
+```{r}
+## SCATTERPLOT
+## INSERT CODE HERE ##
+```
+
